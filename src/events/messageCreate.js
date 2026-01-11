@@ -34,6 +34,16 @@ const messageCreate = async function(message){
             }
         }
     }
+
+    if (message.content.toLowerCase().includes("moa")){
+        try {
+            await message.react("1459951228145500374");
+        }
+        // eslint-disable-next-line no-unused-vars
+        catch (error){
+            // ignore
+        }
+    }
 };
 
 export default messageCreate;
