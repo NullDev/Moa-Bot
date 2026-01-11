@@ -12,7 +12,7 @@ const wolfram = new WolframAlpha();
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Ask a question to Wolfram Alpha")
+        .setDescription("Ask a question to Wolfram Alpha.")
         .setContexts([InteractionContextType.Guild])
         .addStringOption((option) =>
             option.setName("input")

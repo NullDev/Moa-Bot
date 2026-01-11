@@ -10,7 +10,7 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Evaluate a math expression")
+        .setDescription("Evaluate a math expression.")
         .setContexts([InteractionContextType.Guild])
         .addStringOption((option) =>
             option.setName("expression")

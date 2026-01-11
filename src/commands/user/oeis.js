@@ -9,7 +9,7 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Search the OEIS for a sequence")
+        .setDescription("Search the OEIS for an integer sequence.")
         .setContexts([InteractionContextType.Guild])
         .addStringOption((option) =>
             option.setName("sequence")

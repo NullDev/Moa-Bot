@@ -53,7 +53,7 @@ export default {
 
         const embed = {
             title: "Bot Info",
-            description: "Discord bot for TUT Server. Math utils and daily integral helpers.",
+            description: "Discord bot for TUT Server. Math utils and daily integral helpers\nTo request features and report bugs, [go here](<https://github.com/NullDev/Moa-Bot/issues>).",
             color: 2518621,
             thumbnail: {
                 url: botAvatar,

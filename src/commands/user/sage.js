@@ -9,7 +9,7 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Ask SageMath / SageCell")
+        .setDescription("Ask SageMath / SageCell.")
         .setContexts([InteractionContextType.Guild]),
     /**
      * @param {import("discord.js").ChatInputCommandInteraction} interaction

@@ -48,7 +48,7 @@ const getLeaderboard = async function(guildId){
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("View integral solving statistics.")
+        .setDescription("View integral solving stats of yourself or a user.")
         .setContexts([InteractionContextType.Guild])
         .addUserOption(option =>
             option.setName("user")
