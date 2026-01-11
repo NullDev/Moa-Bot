@@ -54,5 +54,6 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | discord: <br> `total_shards` | Number of shards to use or "auto" for automatic sharding | number \| "auto" | 1 |
 | ids: <br> `guild_id` | ID of the main server where special features are enabled | string | N/A |
 | ids: <br> `daily_int_channel` | ID of the daily integral channel | string | N/A |
+| ids: <br> `meme_channel` | ID of the meme channel | string | N/A |
 
 <hr>
