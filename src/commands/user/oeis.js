@@ -28,7 +28,7 @@ export default {
 
         const f = await fetch(url, {
             headers: {
-                "User-Agent": "Arithmetica-Bot/1.0 (Discord Bot; +https://github.com/NullDev/Arithmetica-Bot)",
+                "User-Agent": "Moa-Bot/1.0 (Discord Bot; +https://github.com/NullDev/Moa-Bot)",
                 Accept: "application/json",
             },
         });

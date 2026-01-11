@@ -49,7 +49,7 @@ export default {
         ) => Number(acc) + Number(memberCount), 0);
 
         const botAvatar = interaction.client.user?.displayAvatarURL({ extension: "png" })
-            || "https://raw.githubusercontent.com/NullDev/Arithmetica-Bot/master/assets/logo.png";
+            || "https://raw.githubusercontent.com/NullDev/Moa-Bot/refs/heads/master/assets/icon.png";
 
         const embed = {
             title: "Bot Info",
