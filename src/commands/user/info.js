@@ -66,7 +66,7 @@ export default {
                 },
                 {
                     name: "Source Code :scroll:",
-                    value: "Based on [NullDev/Arithmetica](https://github.com/NullDev/Arithmetica-Bot)",
+                    value: "[NullDev/Moa-Bot](https://github.com/NullDev/Moa-Bot)",
                     inline: true,
                 },
                 { name: "\u200b", value: "\u200b", inline: true },

@@ -26,7 +26,7 @@ export default {
 
         const str = await Promise.all(userCommands.map(async(cmd) => `**/${cmd.data.name}** - ${cmd.data.description}`));
 
-        const preamble = "List of all user commands:";
+        const preamble = "Note: To request features and report bugs, [go here](<https://github.com/NullDev/Moa-Bot/issues>)\n.List of all user commands:";
         const responseContent = preamble + "\n\n" + str.join("\n");
 
         if (interaction.deferred){
