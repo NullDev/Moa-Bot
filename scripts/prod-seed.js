@@ -13,71 +13,13 @@ const integralDb = new QuickDB({
 const GUILD_ID = config.ids.guild_id;
 
 const winners = [
+    /*
     {
-        date: "2025-12-30",
-        difficulty: "Mild",
-        solvers: ["1353684107087052920", "1050427548904980581", "484745967644704768"],
+        date: "", // YYYY-MM-DD
+        difficulty: "", // Easy, Mild, Low Intermediate, Intermediate, High Intermediate, Advanced Elementary, Non-Elementary
+        solvers: [""], // IDs
     },
-    {
-        date: "2025-12-31",
-        difficulty: "Low Intermediate",
-        solvers: ["1353684107087052920", "1240616758126182470", "484745967644704768"],
-    },
-    {
-        date: "2026-01-01",
-        difficulty: "Intermediate",
-        solvers: ["1353684107087052920", "1275090914532130891", "484745967644704768"],
-    },
-    {
-        date: "2026-01-02",
-        difficulty: "High Intermediate",
-        solvers: ["1031857874449739806", "1353684107087052920", "1343987099434614861", "484745967644704768"],
-    },
-    {
-        date: "2026-01-03",
-        difficulty: "Advanced Elementary",
-        solvers: ["371724846205239326"],
-    },
-    {
-        date: "2026-01-04",
-        difficulty: "Non-Elementary",
-        solvers: ["371724846205239326"],
-    },
-    {
-        date: "2026-01-05",
-        difficulty: "Easy",
-        solvers: ["1275090914532130891", "838002362391068683", "484745967644704768", "1353684107087052920", "1081121552894005258"],
-    },
-    {
-        date: "2026-01-06",
-        difficulty: "Mild",
-        solvers: ["1050427548904980581", "371724846205239326", "1275090914532130891"],
-    },
-    {
-        date: "2026-01-07",
-        difficulty: "Low Intermediate",
-        solvers: ["1050427548904980581", "484745967644704768", "1353684107087052920"],
-    },
-    {
-        date: "2026-01-08",
-        difficulty: "Intermediate",
-        solvers: ["371724846205239326", "1353684107087052920"],
-    },
-    {
-        date: "2026-01-09",
-        difficulty: "High Intermediate",
-        solvers: ["1275090914532130891", "1353684107087052920"],
-    },
-    {
-        date: "2026-01-10",
-        difficulty: "Advanced Elementary",
-        solvers: ["1031857874449739806", "371724846205239326", "1353684107087052920"],
-    },
-    {
-        date: "2026-01-11",
-        difficulty: "Non-Elementary",
-        solvers: ["371724846205239326", "1031857874449739806"],
-    },
+    */
 ];
 
 /**
