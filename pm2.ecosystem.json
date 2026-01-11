@@ -1,0 +1,14 @@
+{
+    "apps": [
+        {
+            "name": "moa-bot",
+            "cwd": "./",
+            "script": "src/app.js",
+            "exec_mode": "fork",
+            "instances": 1,
+            "env": { "NODE_ENV": "production" },
+            "repo": "https://github.com/NullDev/Moa-Bot.git",
+            "ref": "origin/master"
+        }
+    ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "moa-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Discord bot for TUT Server. Math utils and daily integral helpers.",
+  "main": "src/app.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start:dev": "npm run lint && cross-env NODE_ENV=development node src/app.js",
+    "start:prod": "cross-env NODE_ENV=production node src/app.js",
+    "start": "npm run start:dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "generate-config": "node scripts/generate-config.js",
+    "pull-and-restart": "node scripts/pull-and-restart.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NullDev/Moa-Bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NullDev/Moa-Bot/issues"
+  },
+  "homepage": "https://github.com/NullDev/Moa-Bot#readme",
+  "author": "NullDev",
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/eslint-parser": "^7.28.5",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.2"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.5.0",
+    "canvas": "^3.2.0",
+    "check-dependencies": "^2.0.0",
+    "discord-hybrid-sharding": "^3.0.1",
+    "discord.js": "^14.25.1",
+    "mathjs": "^15.1.0",
+    "nerdamer": "^1.1.13",
+    "node-cron": "^4.2.1",
+    "quick.db": "^9.1.7"
+  }
+}
