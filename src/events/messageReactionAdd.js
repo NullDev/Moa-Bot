@@ -89,7 +89,7 @@ const messageReactionAdd = async function(reaction, user){
         const lines = currentContent.split("\n");
         const filteredLines = lines.filter(line => !line.startsWith("**Solvers:**"));
 
-        const newContent = filteredLines.join("\n") + `\n**Solvers:*\n*${solverMentions.join("\n")}`;
+        const newContent = filteredLines.join("\n") + `\n**Solvers:**\n${solverMentions.join("\n")}`;
 
         await parentMessage.edit({
             content: newContent,
