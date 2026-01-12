@@ -74,15 +74,17 @@ const messageReactionAdd = async function(reaction, user){
         await integralDb.set(`${userKey}.solutions`, userSolutions);
 
         const solverMentions = await Promise.all(
-        solvers.map(async (solverId) => {
-            try {
-                const solverUser = await reaction.message.client.users.fetch(solverId);
-                return solverUser ? `${solverUser}` : `<@${solverId}>`;
-            }
-            catch (e) {
-                return `<@${solverId}>`;
-            }
-        }));
+            solvers.map(async (solverId) => {
+                try {
+                    const solverUser = await reaction.message.client.users.fetch(solverId);
+                    return solverUser ? `${solverUser}` : `<@${solverId}>`;
+                }
+                // eslint-disable-next-line no-unused-vars
+                catch (e){
+                    return `<@${solverId}>`;
+                }
+            }),
+        );
 
         const currentContent = parentMessage.content ?? "";
 
