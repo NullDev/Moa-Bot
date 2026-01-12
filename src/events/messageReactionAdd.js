@@ -74,27 +74,29 @@ const messageReactionAdd = async function(reaction, user){
         await integralDb.set(`${userKey}.solutions`, userSolutions);
 
         const currentContent = parentMessage.content;
+
         const solverMentions = await Promise.all(
-            solvers.map(async(/** @type {import("discord.js").UserResolvable} */ solverId) => {
-                try {
-                    const solverUser = await reaction.message.client.users.fetch(solverId);
-                    return solverUser ? `${solverUser}` : `<@${solverId}>`;
-                }
-                catch {
-                    return `<@${solverId}>`;
-                }
-            }),
-        );
+        solvers.map(async (solverId) => {
+            try {
+                const solverUser = await reaction.message.client.users.fetch(solverId);
+                return solverUser ? `${solverUser}` : `<@${solverId}>`;
+            }
+            catch (e) {
+                return `<@${solverId}>`;
+            }
+        }));
 
-        const lines = currentContent.split("\n");
-        const filteredLines = lines.filter(line => !line.startsWith("**Solvers:**"));
+        const currentContent = parentMessage.content ?? "";
 
-        const newContent = filteredLines.join("\n") + `\n**Solvers:**\n${solverMentions.join("\n")}`;
+        const contentWithoutSolvers = currentContent.replace(
+            /\n?\*\*Solvers:\*{1,2}[\s\S]*$/i,
+            ""
+        ).trimEnd();
 
-        await parentMessage.edit({
-            content: newContent,
-        });
+        const newContent = contentWithoutSolvers + `\n\n**Solvers:**\n${solverMentions.join("\n")}`;
 
+        await parentMessage.edit({ content: newContent });
+        
         Log.info(`Added solver ${solver.tag} to integral ${parentMessage.id}`);
     }
     catch (error){
