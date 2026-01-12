@@ -73,8 +73,6 @@ const messageReactionAdd = async function(reaction, user){
 
         await integralDb.set(`${userKey}.solutions`, userSolutions);
 
-        const currentContent = parentMessage.content;
-
         const solverMentions = await Promise.all(
         solvers.map(async (solverId) => {
             try {
