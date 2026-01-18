@@ -71,11 +71,13 @@ export default {
                     const globalPosition = start + index;
                     let rank = 1;
 
-                    // const currentScore = entry[1].total;
+                    const currentScore = entry[1].total;
                     const scoresAbove = new Set();
 
                     for (let i = 0; i < globalPosition; i++){
-                        scoresAbove.add(sortedUsers[i][1].total);
+                        if (sortedUsers[i][1].total > currentScore){
+                            scoresAbove.add(sortedUsers[i][1].total);
+                        }
                     }
 
                     rank = scoresAbove.size + 1;
