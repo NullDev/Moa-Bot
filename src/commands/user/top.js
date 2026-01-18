@@ -69,20 +69,16 @@ export default {
 
                 const usersForPage = pageUsers.map((entry, index) => {
                     const globalPosition = start + index;
-                    let rank = globalPosition + 1;
+                    let rank = 1;
 
-                    if (globalPosition > 0){
-                        const currentScore = entry[1].total;
-                        const previousScore = sortedUsers[globalPosition - 1][1].total;
+                    // const currentScore = entry[1].total;
+                    const scoresAbove = new Set();
 
-                        if (currentScore === previousScore){
-                            let firstWithScore = globalPosition - 1;
-                            while (firstWithScore > 0 && sortedUsers[firstWithScore - 1][1].total === currentScore){
-                                firstWithScore--;
-                            }
-                            rank = firstWithScore + 1;
-                        }
+                    for (let i = 0; i < globalPosition; i++){
+                        scoresAbove.add(sortedUsers[i][1].total);
                     }
+
+                    rank = scoresAbove.size + 1;
 
                     return [
                         rank,
