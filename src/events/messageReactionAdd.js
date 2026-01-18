@@ -33,11 +33,6 @@ const messageReactionAdd = async function(reaction, user){
     if (!channel.isThread()) return;
 
     try {
-        const member = await reaction.message.guild?.members.fetch(user.id);
-        if (!member?.permissions.has(PermissionFlagsBits.ModerateMembers)){
-            return;
-        }
-
         const parentChannel = channel.parent;
         if (!parentChannel?.isTextBased()) return;
 
@@ -48,6 +43,14 @@ const messageReactionAdd = async function(reaction, user){
 
         const integralData = await integralDb.get(integralKey);
         if (!integralData) return;
+
+        const member = await reaction.message.guild?.members.fetch(user.id);
+        const isModerator = member?.permissions.has(PermissionFlagsBits.ModerateMembers);
+        const isProposer = integralData.proposedBy && integralData.proposedBy === user.id;
+
+        if (!isModerator && !isProposer){
+            return;
+        }
 
         const solver = reaction.message.author;
         if (!solver || solver.bot) return;
