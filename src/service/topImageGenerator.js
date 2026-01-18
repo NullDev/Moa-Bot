@@ -72,7 +72,7 @@ const generateImage = async function(users){
         const text = `${rank}. ${info.tag}`;
         ctx.fillText(text, 70, i * lineHeight + 30);
 
-        if (i === 0){
+        if (rank === 1){
             const textWidth = ctx.measureText(text).width;
             ctx.drawImage(crownImage, 70 + textWidth + 10, i * lineHeight + 13, 20, 20);
         }

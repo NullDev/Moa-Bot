@@ -67,22 +67,40 @@ export default {
                 const end = start + USERS_PER_PAGE;
                 const pageUsers = sortedUsers.slice(start, end);
 
-                const usersForPage = pageUsers.map((entry, index) => [
-                    start + index + 1,
-                    entry[0],
-                    entry[1].total,
-                ]);
+                const usersForPage = pageUsers.map((entry, index) => {
+                    const globalPosition = start + index;
+                    let rank = globalPosition + 1;
 
-                const usersWithNames = await Promise.all(usersForPage.map(async(user) => {
-                    const [index, userid, total] = user;
+                    if (globalPosition > 0){
+                        const currentScore = entry[1].total;
+                        const previousScore = sortedUsers[globalPosition - 1][1].total;
 
-                    const member = await interaction.guild?.members.fetch(userid).catch(() => null);
-                    if (!member){
-                        return [index, { tag: "Anonymous", pic: null }, total];
+                        if (currentScore === previousScore){
+                            let firstWithScore = globalPosition - 1;
+                            while (firstWithScore > 0 && sortedUsers[firstWithScore - 1][1].total === currentScore){
+                                firstWithScore--;
+                            }
+                            rank = firstWithScore + 1;
+                        }
                     }
 
                     return [
-                        index,
+                        rank,
+                        entry[0],
+                        entry[1].total,
+                    ];
+                });
+
+                const usersWithNames = await Promise.all(usersForPage.map(async(user) => {
+                    const [rank, userid, total] = user;
+
+                    const member = await interaction.guild?.members.fetch(userid).catch(() => null);
+                    if (!member){
+                        return [rank, { tag: "Anonymous", pic: null }, total];
+                    }
+
+                    return [
+                        rank,
                         {
                             tag: member.nickname || member.displayName || member.user.username,
                             pic: member.displayAvatarURL({ extension: "png" }),
