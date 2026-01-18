@@ -176,6 +176,14 @@ export default {
                 });
 
                 collector.on("collect", async(buttonInteraction) => {
+                    if (buttonInteraction.user.id !== interaction.user.id){
+                        await buttonInteraction.reply({
+                            content: "Sorry, this list was made for <@" + interaction.user.id + ">, not you. You can't interact with it.",
+                            ephemeral: true,
+                        });
+                        return;
+                    }
+
                     if (buttonInteraction.customId === "prev"){
                         currentPage = Math.max(0, currentPage - 1);
                     }

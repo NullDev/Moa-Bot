@@ -74,7 +74,7 @@ const messageReactionAdd = async function(reaction, user){
         await integralDb.set(`${userKey}.solutions`, userSolutions);
 
         const solverMentions = await Promise.all(
-            solvers.map(async (solverId) => {
+            solvers.map(async(/** @type {import("discord.js").UserResolvable} */ solverId) => {
                 try {
                     const solverUser = await reaction.message.client.users.fetch(solverId);
                     return solverUser ? `${solverUser}` : `<@${solverId}>`;
@@ -90,13 +90,13 @@ const messageReactionAdd = async function(reaction, user){
 
         const contentWithoutSolvers = currentContent.replace(
             /\n?\*\*Solvers:\*{1,2}[\s\S]*$/i,
-            ""
+            "",
         ).trimEnd();
 
         const newContent = contentWithoutSolvers + `\n\n**Solvers:**\n${solverMentions.join("\n")}`;
 
         await parentMessage.edit({ content: newContent });
-        
+
         Log.info(`Added solver ${solver.tag} to integral ${parentMessage.id}`);
     }
     catch (error){
