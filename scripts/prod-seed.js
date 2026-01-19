@@ -12,6 +12,7 @@ const integralDb = new QuickDB({
 
 const GUILD_ID = config.ids.guild_id;
 
+// @ts-ignore
 const winners = [
     /*
     {
@@ -28,7 +29,7 @@ const winners = [
 const seedDatabase = async function(){
     console.log("Starting database seeding...");
 
-    try {
+    try { // @ts-ignore
         for (const entry of winners){
             const { date, difficulty, solvers } = entry;
             const isoDate = new Date(date).toISOString();

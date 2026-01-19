@@ -7,7 +7,7 @@ import checkDependencies from "check-dependencies";
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const ecosystemPath = path.resolve("./pm2.ecosystem.json");
+const ecosystemPath = path.resolve("./pm2.ecosystem.json"); // @ts-ignore
 const isNpmInstallNeeded = async() => !(await checkDependencies())?.depsWereOk;
 const customPm2Home = process.argv[2];
 
@@ -15,7 +15,7 @@ const pm2 = !!customPm2Home
     ? `PM2_HOME=${customPm2Home} pm2`
     : "pm2";
 
-const execAsync = command => new Promise((resolve, reject) => {
+const execAsync = (/** @type {string} */ command) => new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {
         if (stdout) console.log(stdout.trim());
         if (stderr) console.error(stderr);

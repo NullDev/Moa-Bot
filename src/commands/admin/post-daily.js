@@ -83,7 +83,7 @@ export default {
 
             const image = interaction.options.getAttachment("image", true);
             const difficulty = interaction.options.getString("difficulty", true);
-            const proposedBy = interaction.options.getUser("proposed_by");
+            const proposedBy = interaction.options.getUser("proposed_by") || interaction.user;
 
             if (!image.contentType?.startsWith("image/")){
                 return await interaction.editReply({
@@ -110,10 +110,7 @@ export default {
             const now = new Date();
             const dateStr = formatDate(now);
             let messageContent = `# ${dateStr} Integral (${difficulty})`;
-
-            if (proposedBy){
-                messageContent += `\nProposed by: ${proposedBy}`;
-            }
+            messageContent += `\nProposed by: ${proposedBy}`;
 
             const integralMessage = await channel.send({
                 content: messageContent,
@@ -135,10 +132,7 @@ export default {
             await integralDb.set(`${integralKey}.threadId`, thread.id);
             await integralDb.set(`${integralKey}.imageUrl`, image.url);
             await integralDb.set(`${integralKey}.solvers`, []);
-
-            if (proposedBy){
-                await integralDb.set(`${integralKey}.proposedBy`, proposedBy.id);
-            }
+            await integralDb.set(`${integralKey}.proposedBy`, proposedBy.id);
 
             Log.info(`Posted daily integral: ${integralMessage.id} by ${interaction.user.tag}`);
 
