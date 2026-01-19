@@ -9,10 +9,27 @@ import Log from "../../util/log.js";
 const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 
 /**
+ * Get dense rank for a user based on their score
+ *
+ * @param {number} userScore
+ * @param {Array<number>} allScores - sorted descending
+ * @returns {number}
+ */
+const getDenseRank = function(userScore, allScores){
+    const scoresAbove = new Set();
+    for (const score of allScores){
+        if (score > userScore){
+            scoresAbove.add(score);
+        }
+    }
+    return scoresAbove.size + 1;
+};
+
+/**
  * Get all users with solutions in the guild
  *
  * @param {string} guildId
- * @returns {Promise<Array<{userId: string, count: number}>>}
+ * @returns {Promise<{sorted: Array<{userId: string, count: number}>, allScores: Array<number>}>}
  */
 const getLeaderboard = async function(guildId){
     try {
@@ -20,7 +37,7 @@ const getLeaderboard = async function(guildId){
         const userCounts = new Map();
 
         if (!guildData || typeof guildData !== "object"){
-            return [];
+            return { sorted: [], allScores: [] };
         }
 
         for (const [key, value] of Object.entries(guildData)){
@@ -34,14 +51,51 @@ const getLeaderboard = async function(guildId){
             }
         }
 
-        return Array.from(userCounts.entries())
+        const sorted = Array.from(userCounts.entries())
             .map(([userId, count]) => ({ userId, count }))
             .sort((a, b) => b.count - a.count);
+
+        const allScores = sorted.map(entry => entry.count);
+
+        return { sorted, allScores };
     }
     catch (error){
         const err = error instanceof Error ? error : new Error(String(error));
         Log.error("Error getting leaderboard: ", err);
-        return [];
+        return { sorted: [], allScores: [] };
+    }
+};
+
+/**
+ * Count how many integrals a user has proposed in a guild
+ *
+ * @param {string} guildId
+ * @param {string} userId
+ * @returns {Promise<number>}
+ */
+const getProposedCount = async function(guildId, userId){
+    try {
+        const guildData = await integralDb.get(`guild-${guildId}`);
+        let count = 0;
+
+        if (!guildData || typeof guildData !== "object"){
+            return 0;
+        }
+
+        for (const [key, value] of Object.entries(guildData)){
+            if (key.startsWith("integral-") && value && typeof value === "object"){
+                if (value.proposedBy === userId){
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
+    catch (error){
+        const err = error instanceof Error ? error : new Error(String(error));
+        Log.error("Error getting proposed count: ", err);
+        return 0;
     }
 };
 
@@ -96,8 +150,11 @@ export default {
                 }
             }
 
-            const leaderboard = await getLeaderboard(interaction.guildId || "");
-            const position = leaderboard.findIndex(entry => entry.userId === targetUser.id) + 1;
+            const { sorted: leaderboard, allScores } = await getLeaderboard(interaction.guildId || "");
+            const userEntry = leaderboard.find(entry => entry.userId === targetUser.id);
+            const position = userEntry ? getDenseRank(userEntry.count, allScores) : 0;
+
+            const proposedCount = await getProposedCount(interaction.guildId || "", targetUser.id);
 
             const recentSolutions = solutions.slice(-5).reverse();
             const recentText = await Promise.all(recentSolutions.map(async(/** @type {{ date: string | number | Date; difficulty: any; }} */ sol) => {
@@ -121,7 +178,7 @@ export default {
                     { name: "High Int.", value: `${difficultyCount["High Intermediate"]}`, inline: true },
                     { name: "Adv. Elem.", value: `${difficultyCount["Advanced Elementary"]}`, inline: true },
                     { name: "Non-Elem.", value: `${difficultyCount["Non-Elementary"]}`, inline: true },
-                    { name: "\u200B", value: "\u200B", inline: true },
+                    { name: "Proposed", value: `${proposedCount}`, inline: true },
                     { name: "\u200B", value: "\u200B", inline: true },
                 );
 
