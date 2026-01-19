@@ -10,5 +10,6 @@ export default {
         daily_int_channel: "",
         daily_int_role: "",
         meme_channel: "",
+        general_channel: "",
     },
 };
