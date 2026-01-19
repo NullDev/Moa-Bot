@@ -12,79 +12,14 @@ const integralDb = new QuickDB({
 
 const GUILD_ID = config.ids.guild_id;
 
+// @ts-ignore
 const proposers = [
+    /*
     {
-        date: "2025-12-30",
-        proposer: "1031857874449739806",
+        date: "YYYY-MM-DD",
+        proposer: "USER-ID",
     },
-    {
-        date: "2025-12-31",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-01",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-02",
-        proposer: "1353684107087052920",
-    },
-    {
-        date: "2026-01-03",
-        proposer: "1353684107087052920",
-    },
-    {
-        date: "2026-01-04",
-        proposer: "371724846205239326",
-    },
-    {
-        date: "2026-01-05",
-        proposer: "1050427548904980581",
-    },
-    {
-        date: "2026-01-06",
-        proposer: "1353684107087052920",
-    },
-    {
-        date: "2026-01-07",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-08",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-09",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-10",
-        proposer: "371724846205239326",
-    },
-    {
-        date: "2026-01-11",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-13",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-15",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-16",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-17",
-        proposer: "1031857874449739806",
-    },
-    {
-        date: "2026-01-19",
-        proposer: "1031857874449739806",
-    },
+    */
 ];
 
 /**
@@ -98,6 +33,7 @@ const seedProposers = async function(){
         let updated = 0;
         let created = 0;
 
+        // @ts-ignore
         for (const entry of proposers){
             const { date, proposer } = entry;
             const isoDate = new Date(date).toISOString();
