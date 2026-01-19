@@ -33,9 +33,10 @@ const loadImageFromFile = async function(path){
  * Generate Top List Image
  *
  * @param {Array<any>} users
+ * @param {string} sortBy - "solved" or "proposed"
  * @return {Promise<Buffer>}
  */
-const generateImage = async function(users){
+const generateImage = async function(users, sortBy = "solved"){
     const canvasWidth = 600;
     const lineHeight = 80;
     const canvasHeight = lineHeight * users.length;
@@ -59,7 +60,8 @@ const generateImage = async function(users){
         const user = users[i];
         const rank = user[0];
         const info = user[1];
-        const total = user[2];
+        const solved = user[2];
+        const proposed = user[3];
 
         let profilePic;
         if (!info.pic) profilePic = defaultImg;
@@ -78,8 +80,11 @@ const generateImage = async function(users){
         }
 
         ctx.drawImage(totalImg, 70, i * lineHeight + 43, 20, 20);
-        const totalTxt = `: ${total} integrals solved`;
-        ctx.fillText(totalTxt, 95, i * lineHeight + 60);
+
+        const statsTxt = sortBy === "proposed"
+            ? `: ${proposed} proposed. ${solved} solved.`
+            : `: ${solved} solved. ${proposed} proposed.`;
+        ctx.fillText(statsTxt, 95, i * lineHeight + 60);
 
         if (i < users.length - 1){
             ctx.beginPath();
