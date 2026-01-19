@@ -44,6 +44,16 @@ const messageCreate = async function(message){
             // ignore
         }
     }
+
+    if (message.content.toLowerCase().includes("peak")){
+        try {
+            await message.react("1444063284407046335");
+        }
+        // eslint-disable-next-line no-unused-vars
+        catch (error){
+            // ignore
+        }
+    }
 };
 
 export default messageCreate;
