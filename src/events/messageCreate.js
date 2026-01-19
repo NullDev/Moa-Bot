@@ -21,8 +21,7 @@ const messageCreate = async function(message){
 
     if (message.partial) return;
 
-    const msg = message.content.trim();
-    const cleanedMsg = msg.toLowerCase().replace(/[^a-z0-9öäüß ]/g, "").trim();
+    const msg = message.content.trim().toLowerCase();
 
     const memeChannelId = config.ids.meme_channel;
     if (memeChannelId && message.channelId === memeChannelId){
@@ -38,19 +37,19 @@ const messageCreate = async function(message){
         }
     }
 
-    if (cleanedMsg.includes("moa")){
+    if (msg.includes("moa")){
         await message.react("1459951228145500374").catch();
     }
 
-    if (cleanedMsg.includes("peak")){
+    if (msg.includes("peak")){
         await message.react("1444063284407046335").catch();
     }
 
-    else if (cleanedMsg.startsWith("im") || cleanedMsg.startsWith("i am") || cleanedMsg.startsWith("i'm")){
+    else if (msg.startsWith("im") || msg.startsWith("i am") || msg.startsWith("i'm")){
         const shouldSend = Math.random() <= 0.5; // 50% chance to respond
         if (!shouldSend) return;
 
-        const words = cleanedMsg.split(" ").filter(Boolean);
+        const words = msg.split(" ").filter(Boolean);
         if (words.length <= 5){
             let name = words.slice(2).join(" ");
             if (name.length > 0){
