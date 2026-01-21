@@ -45,17 +45,18 @@ const messageCreate = async function(message){
         await message.react("1444063284407046335").catch();
     }
 
-    else if (msg.startsWith("im") || msg.startsWith("i am") || msg.startsWith("i'm")){
+    else if (/^(im|i'm|i am)(\b|$)/.test(msg)){
         const shouldSend = Math.random() <= 0.5; // 50% chance to respond
         if (!shouldSend) return;
 
-        const words = msg.split(" ").filter(Boolean);
+        const words = msg.split(/\s+/).filter(Boolean);
         if (words.length <= 5){
-            let name = words.slice(2).join(" ");
+            let startIndex = 1;
+            if (words[0] === "i" && words[1] === "am") startIndex = 2;
+
+            let name = words.slice(startIndex).join(" ");
             if (name.length > 0){
-                const firstLetter = name.charAt(0).toUpperCase();
-                const rest = name.slice(1);
-                name = firstLetter + rest;
+                name = name.charAt(0).toUpperCase() + name.slice(1);
             }
             if (name.length > 0 && name.length <= 32){
                 await message.reply(`Hello ${name}, I am Moa Bot. :wave:`).catch(() => {});
