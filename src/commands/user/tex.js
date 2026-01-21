@@ -15,7 +15,11 @@ export default {
         .addStringOption((option) =>
             option.setName("expression")
                 .setDescription("The LaTeX expression to render")
-                .setRequired(true)),
+                .setRequired(true))
+        .addBooleanOption((option) =>
+            option.setName("spoiler")
+                .setDescription("Send the image as a spoiler")
+                .setRequired(false)),
     /**
      * @param {import("discord.js").ChatInputCommandInteraction} interaction
      */
@@ -29,6 +33,8 @@ export default {
         }
 
         const expr = interaction.options.get("expression")?.value;
+        const spoiler = interaction.options.getBoolean("spoiler") ?? false;
+
         if (!expr) return await interaction.editReply({ content: "Invalid argument!" });
 
         const stream = texRender(String(expr));
@@ -42,7 +48,7 @@ export default {
             files: [
                 {
                     attachment: buffer,
-                    name: "render.png",
+                    name: spoiler ? "SPOILER_render.png" : "render.png",
                 },
             ],
         });
