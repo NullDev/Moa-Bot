@@ -11,5 +11,6 @@ export default {
         daily_int_role: "",
         meme_channel: "",
         general_channel: "",
+        moabot: "",
     },
 };

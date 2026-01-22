@@ -56,5 +56,7 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | ids: <br> `daily_int_channel` | ID of the daily integral channel | string | N/A |
 | ids: <br> `meme_channel` | ID of the meme channel | string | N/A |
 | ids: <br> `general_channel` | ID of the general channel | string | N/A |
+| ids: <br> `daily_int_role` | ID of the daily integral role | string | N/A |
+| ids: <br> `moabot` | ID of the Moa Bot user | string | N/A |
 
 <hr>

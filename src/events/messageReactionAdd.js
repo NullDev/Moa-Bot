@@ -1,5 +1,6 @@
 import { PermissionFlagsBits } from "discord.js";
 import integralDb from "../util/integralDb.js";
+import { config } from "../../config/config.js";
 import Log from "../util/log.js";
 
 // ========================= //
@@ -55,8 +56,9 @@ const messageReactionAdd = async function(reaction, user){
         if (solver.bot){
             try {
                 await reaction.users.remove(user.id);
+                const who = solver.id === config.ids.moabot ? "I" : "that bot";
                 await channel.send({
-                    content: `<@${user.id}>, errm... ackshually bots can't solve integrals :point_up::nerd: \nI removed the reaction.`,
+                    content: `<@${user.id}>, errm... ackshually ${who} can't solve integrals :point_up::nerd: \nI removed the reaction.`,
                     files: ["./assets/errm.jpg"],
                 });
             }
