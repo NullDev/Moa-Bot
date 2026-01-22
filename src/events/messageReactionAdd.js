@@ -14,8 +14,6 @@ import Log from "../util/log.js";
  * @return {Promise<void>}
  */
 const messageReactionAdd = async function(reaction, user){
-    if (user.bot) return;
-
     if (reaction.partial){
         try {
             await reaction.fetch();
@@ -53,7 +51,21 @@ const messageReactionAdd = async function(reaction, user){
         }
 
         const solver = reaction.message.author;
-        if (!solver || solver.bot) return;
+        if (!solver) return;
+        if (solver.bot){
+            try {
+                await reaction.users.remove(user.id);
+                await channel.send({
+                    content: `<@${user.id}>, errm... ackshually bots can't solve integrals :point_up::nerd: \nI removed the reaction.`,
+                    files: ["./assets/errm.jpg"],
+                });
+            }
+            catch (error){
+                const err = error instanceof Error ? error : new Error(String(error));
+                Log.error("Error removing reaction: ", err);
+            }
+            return;
+        }
 
         const solvers = await integralDb.get(`${integralKey}.solvers`) || [];
 
