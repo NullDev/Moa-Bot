@@ -118,9 +118,5 @@ const deleteIntegral = async function(messageId){
 
 const args = process.argv.slice(2);
 
-if (args[0] === "delete" && args[1]){
-    deleteIntegral(args[1]);
-}
-else {
-    listIntegrals();
-}
+if (args[0] === "delete" && args[1]) deleteIntegral(args[1]);
+else listIntegrals();
