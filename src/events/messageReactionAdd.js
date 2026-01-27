@@ -8,6 +8,24 @@ import Log from "../util/log.js";
 // ========================= //
 
 /**
+ * Fail message
+ *
+ * @param {import("discord.js").MessageReaction} reaction
+ * @param {import("discord.js").TextChannel | import("discord.js").NewsChannel | import("discord.js").ThreadChannel} channel
+ * @param {import("discord.js").User} solver
+ * @param {import("discord.js").User} user
+ * @return {Promise<void>}
+ */
+const fail = async function(reaction, channel, solver, user){
+    await reaction.users.remove(user.id);
+    const who = solver.id === config.ids.moabot ? "I" : "that bot";
+    await channel.send({
+        content: `<@${user.id}>, errm... ackshually ${who} can't solve integrals :point_up::nerd: \nI removed the reaction.`,
+        files: ["./assets/errm.jpg"],
+    });
+};
+
+/**
  * Handle messageReactionAdd event
  *
  * @param {import("discord.js").MessageReaction} reaction
@@ -51,28 +69,53 @@ const messageReactionAdd = async function(reaction, user){
             return;
         }
 
-        const solver = reaction.message.author;
+        let solver = reaction.message.author;
         if (!solver) return;
         if (solver.bot){
-            try {
-                await reaction.users.remove(user.id);
-                const who = solver.id === config.ids.moabot ? "I" : "that bot";
-                await channel.send({
-                    content: `<@${user.id}>, errm... ackshually ${who} can't solve integrals :point_up::nerd: \nI removed the reaction.`,
-                    files: ["./assets/errm.jpg"],
-                });
+            if (reaction.message.reference?.messageId || reaction.message.interactionMetadata?.user){
+                try {
+                    const referencedMessage = reaction.message.reference // @ts-ignore
+                        ? await reaction.message.channel.messages.fetch(reaction.message.reference.messageId)
+                        : null;
+                    if ((referencedMessage && !referencedMessage.author.bot) || (reaction.message.interactionMetadata?.user && !reaction.message.interactionMetadata.user.bot)){
+                        const refUser = referencedMessage?.author || reaction.message.interactionMetadata?.user;
+                        if (!refUser){
+                            await fail(reaction, channel, solver, user);
+                            return;
+                        }
+                        const who = solver.id === config.ids.moabot ? "I" : "that bot";
+                        await channel.send({
+                            content: `<@${user.id}>, errm... ackshually ${who} can't solve integrals :point_up::nerd: \nBut I'm guessing you meant <@${refUser.id}> so I'll use them instead.`,
+                            files: ["./assets/errm.jpg"],
+                        });
+                        solver = refUser;
+                    }
+                }
+                catch (error){
+                    const err = error instanceof Error ? error : new Error(String(error));
+                    Log.error("Error fetching referenced message: ", err);
+                }
             }
-            catch (error){
-                const err = error instanceof Error ? error : new Error(String(error));
-                Log.error("Error removing reaction: ", err);
+            else {
+                try {
+                    await fail(reaction, channel, solver, user);
+                }
+                catch (error){
+                    const err = error instanceof Error ? error : new Error(String(error));
+                    Log.error("Error removing reaction: ", err);
+                }
+                return;
             }
-            return;
         }
 
         const solvers = await integralDb.get(`${integralKey}.solvers`) || [];
 
         if (solvers.includes(solver.id)){
             Log.info(`Solver ${solver.tag} already in list for integral ${parentMessage.id}`);
+            await channel.send({
+                content: `<@${user.id}>, seems like you are blind. <@${solver.id}> has already solved this integral.\nI removed the reaction...`,
+            });
+            await reaction.users.remove(user.id);
             return;
         }
 
