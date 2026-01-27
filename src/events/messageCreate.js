@@ -59,7 +59,9 @@ const messageCreate = async function(message){
                 name = name.charAt(0).toUpperCase() + name.slice(1);
             }
             if (name.length > 0 && name.length <= 32){
-                await message.reply(`Hello ${name}, I am Moa Bot. :wave:`).catch(() => {});
+                (name.toLowerCase() === "moa bot" || name.toLowerCase() === "moabot")
+                    ? await message.reply("Nuh uh, that's my name :rage:").catch(() => {})
+                    : await message.reply(`Hello ${name}, I am Moa Bot. :wave:`).catch(() => {});
             }
         }
     }
