@@ -69,6 +69,10 @@ export default {
         .addUserOption(option =>
             option.setName("proposed_by")
                 .setDescription("User who proposed this challenge (optional)")
+                .setRequired(false))
+        .addStringOption(option =>
+            option.setName("date")
+                .setDescription("Override date (YYYY-MM-DD format) for posting past integrals")
                 .setRequired(false)),
     /**
      * @param {import("discord.js").ChatInputCommandInteraction} interaction
@@ -84,11 +88,24 @@ export default {
             const image = interaction.options.getAttachment("image", true);
             const difficulty = interaction.options.getString("difficulty", true);
             const proposedBy = interaction.options.getUser("proposed_by") || interaction.user;
+            const dateOverride = interaction.options.getString("date");
 
             if (!image.contentType?.startsWith("image/")){
                 return await interaction.editReply({
                     content: "The attachment must be an image!",
                 });
+            }
+
+            // Parse date override if provided
+            let postDate = new Date();
+            if (dateOverride){
+                const parsed = new Date(dateOverride);
+                if (isNaN(parsed.getTime())){
+                    return await interaction.editReply({
+                        content: "Invalid date format! Please use YYYY-MM-DD (e.g., 2026-01-15).",
+                    });
+                }
+                postDate = parsed;
             }
 
             const channelId = config.ids.daily_int_channel;
@@ -107,8 +124,7 @@ export default {
                 });
             }
 
-            const now = new Date();
-            const dateStr = formatDate(now);
+            const dateStr = formatDate(postDate);
             let messageContent = `# ${dateStr} Integral (${difficulty})`;
             messageContent += `\nProposed by: ${proposedBy}`;
 
@@ -127,7 +143,7 @@ export default {
             });
 
             const integralKey = `guild-${interaction.guildId}.integral-${integralMessage.id}`;
-            await integralDb.set(`${integralKey}.date`, now.toISOString());
+            await integralDb.set(`${integralKey}.date`, postDate.toISOString());
             await integralDb.set(`${integralKey}.difficulty`, difficulty);
             await integralDb.set(`${integralKey}.threadId`, thread.id);
             await integralDb.set(`${integralKey}.imageUrl`, image.url);
