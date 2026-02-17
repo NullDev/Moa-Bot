@@ -33,6 +33,8 @@ const fail = async function(reaction, channel, solver, user){
  * @return {Promise<void>}
  */
 const messageReactionAdd = async function(reaction, user){
+    if (user.bot) return;
+
     if (reaction.partial){
         try {
             await reaction.fetch();
@@ -45,6 +47,27 @@ const messageReactionAdd = async function(reaction, user){
     }
 
     if (reaction.emoji.name !== "✅") return;
+
+    const roleSelectKey = `guild-${reaction.message.guildId}.role-select-${reaction.message.id}`;
+    const roleSelectData = await integralDb.get(roleSelectKey);
+
+    if (roleSelectData){
+        try {
+            const member = await reaction.message.guild?.members.fetch(user.id);
+            if (!member) return;
+
+            const { roleId } = roleSelectData;
+            if (!member.roles.cache.has(roleId)){
+                await member.roles.add(roleId);
+                Log.info(`Added role ${roleId} to user ${user.tag} via role-select`);
+            }
+        }
+        catch (error){
+            const err = error instanceof Error ? error : new Error(String(error));
+            Log.error("Error adding role via role-select: ", err);
+        }
+        return;
+    }
 
     const {channel} = reaction.message;
     if (!channel.isThread()) return;
