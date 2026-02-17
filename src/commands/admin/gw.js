@@ -15,7 +15,7 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Ghostwriter")
+        .setDescription("(ADMIN) Ghostwriter")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addStringOption((option) =>

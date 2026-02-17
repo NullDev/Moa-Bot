@@ -46,7 +46,7 @@ const formatDate = function(date){
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Post the daily integral challenge.")
+        .setDescription("(ADMIN) Post the daily integral challenge.")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addAttachmentOption(option =>

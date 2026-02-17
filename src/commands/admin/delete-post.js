@@ -31,7 +31,7 @@ const parseMessageLink = function(link){
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Delete an integral post, its thread, and clean up the database.")
+        .setDescription("(ADMIN) Delete an integral post, its thread, and clean up the database.")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addStringOption((option) =>

@@ -9,7 +9,7 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Show an overview of admin commands.")
+        .setDescription("(ADMIN) Show an overview of admin commands.")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
     /**

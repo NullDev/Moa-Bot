@@ -31,7 +31,7 @@ const parseMessageLink = function(link){
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Remove a solver from an integral challenge.")
+        .setDescription("(ADMIN) Remove a solver from an integral challenge.")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addStringOption((option) =>
