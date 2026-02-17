@@ -8,6 +8,7 @@ import messageCreate from "./events/messageCreate.js";
 import clientReady from "./events/clientReady.js";
 import shardReady from "./events/shardReady.js";
 import messageReactionAdd from "./events/messageReactionAdd.js";
+import messageReactionRemove from "./events/messageReactionRemove.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -18,6 +19,7 @@ EventEmitter.defaultMaxListeners = 20;
 const client = new DiscordClient({
     intents: [
         GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages,
@@ -47,6 +49,8 @@ client.on(Events.ShardReady, async shard => shardReady(client, shard));
 client.on(Events.MessageCreate, message => messageCreate(message));
 
 client.on(Events.MessageReactionAdd, async(reaction, user) => messageReactionAdd(reaction, user));
+
+client.on(Events.MessageReactionRemove, async(reaction, user) => messageReactionRemove(reaction, user));
 
 client.on(Events.GuildCreate, async guild => Log.info("Joined guild: " + guild.name));
 
