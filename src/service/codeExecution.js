@@ -1,9 +1,12 @@
 import Log from "../util/log.js";
 import defaults from "../util/defaults.js";
+import { config, meta } from "../../config/config.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
 // ========================= //
+
+const UA = `arithmetica-bot/${meta.getVersion()} (${process.platform}; Node.js ${process.version}) (+https://arithmetica.xyz)`;
 
 /**
  * Compare semantic versions
@@ -83,6 +86,8 @@ const executeCode = async function(interaction){
         body: JSON.stringify(data),
         headers: {
             "Content-Type": "application/json",
+            authorization: config.emkc,
+            "User-Agent": UA,
         },
     }).then((res) => res.json())
         .catch((err) => Log.error("Error during code execution: " + err));

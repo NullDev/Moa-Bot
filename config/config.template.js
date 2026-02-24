@@ -13,4 +13,5 @@ export default {
         general_channel: "",
         moabot: "",
     },
+    emkc: "",
 };
