@@ -23,6 +23,7 @@ const preamble = `\\nonstopmode
 \\usepackage{transparent}
 \\usepackage{tikz-cd}
 \\usepackage{color}
+\\usepackage{CJKutf8}
 \\usepackage{microtype}
 \\def\\mbb#1{\\mathbb{#1}}
 \\def\\mfk#1{\\mathfrak{#1}}

@@ -1,8 +1,8 @@
-import { spawn } from "child_process";
-import path from "path";
-import { createReadStream, createWriteStream, promises as fsPromises } from "fs";
-import { Transform } from "stream";
-import { tmpdir } from "os";
+import { spawn } from "node:child_process";
+import path from "node:path";
+import { createReadStream, createWriteStream, promises as fsPromises } from "node:fs";
+import { Transform } from "node:stream";
+import { tmpdir } from "node:os";
 
 const tempAffixes = {
     dir: tmpdir(),
