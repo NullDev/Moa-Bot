@@ -21,11 +21,16 @@ const statDb = new QuickDB({
  *
  * @param {string} proposerMention
  * @param {string} difficulty
- * @param {boolean} posted
+ * @param {string} status
+ * @param {string} [actorMention]
+ * @param {string} [actorLabel]
  * @returns {string}
  */
-const buildProposalContent = (proposerMention, difficulty, posted) =>
-    `**Integral Proposal**\nProposer: ${proposerMention}\nProposed Difficulty: ${difficulty}\nStatus: ${posted ? "✅ Posted" : "Not Posted"}`;
+const buildProposalContent = (proposerMention, difficulty, status, actorMention, actorLabel = "Approved by") => {
+    let content = `**Integral Proposal**\nProposer: ${proposerMention}\nProposed Difficulty: ${difficulty}\nStatus: ${status}`;
+    if (actorMention) content += `\n${actorLabel}: ${actorMention}`;
+    return content;
+};
 
 const DIFFICULTY_CHOICES = [
     { name: "Easy", value: "Easy" },
@@ -52,6 +57,11 @@ const buildDisabledRow = () => new ActionRowBuilder().addComponents(
         .setCustomId("change_difficulty")
         .setLabel("Change Difficulty")
         .setStyle(ButtonStyle.Secondary)
+        .setDisabled(true),
+    new ButtonBuilder()
+        .setCustomId("reject_proposal")
+        .setLabel("Reject")
+        .setStyle(ButtonStyle.Danger)
         .setDisabled(true),
 );
 
@@ -98,7 +108,7 @@ const handlePostProposal = async function(interaction){
         await integralDb.set(`${proposalKey}.posted`, true);
 
         await interaction.message.edit({
-            content: buildProposalContent(`<@${proposalData.proposerId}>`, proposalData.difficulty, true),
+            content: buildProposalContent(`<@${proposalData.proposerId}>`, proposalData.difficulty, "✅ Posted", `${interaction.user}`),
             components: [/** @type {any} */ (buildDisabledRow())],
         });
 
@@ -179,7 +189,7 @@ const handleSelectDifficulty = async function(interaction){
             const proposalMessage = await proposalChannel.messages.fetch(proposalMsgId).catch(() => null);
             if (proposalMessage){
                 await proposalMessage.edit({
-                    content: buildProposalContent(`<@${proposalData.proposerId}>`, newDifficulty, false),
+                    content: buildProposalContent(`<@${proposalData.proposerId}>`, newDifficulty, "Not Posted"),
                 });
             }
         }
@@ -240,6 +250,41 @@ const handleModalSubmit = async function(interaction){
 };
 
 /**
+ * Handle "Reject" button
+ *
+ * @param {import("discord.js").ButtonInteraction} interaction
+ */
+const handleRejectProposal = async function(interaction){
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)){
+        return await interaction.reply({ content: "You don't have permission to reject proposals!", flags: [MessageFlags.Ephemeral] });
+    }
+
+    await interaction.deferUpdate();
+
+    const msgId = interaction.message.id;
+    const guildId = interaction.guildId ?? "";
+    const proposalKey = `guild-${guildId}.proposal-${msgId}`;
+
+    const proposalData = await integralDb.get(proposalKey);
+    if (!proposalData){
+        return await interaction.followUp({ content: "Proposal data not found in the database!", flags: [MessageFlags.Ephemeral] });
+    }
+
+    if (proposalData.posted){
+        return await interaction.followUp({ content: "This integral has already been posted and cannot be rejected.", flags: [MessageFlags.Ephemeral] });
+    }
+
+    await integralDb.set(`${proposalKey}.posted`, true);
+
+    await interaction.message.edit({
+        content: buildProposalContent(`<@${proposalData.proposerId}>`, proposalData.difficulty, "❌ Rejected", `${interaction.user}`, "Rejected by"),
+        components: [/** @type {any} */ (buildDisabledRow())],
+    });
+
+    Log.info(`Proposal ${msgId} rejected by ${interaction.user.tag}`);
+};
+
+/**
  * Handle button interactions
  *
  * @param {import("discord.js").ButtonInteraction} interaction
@@ -247,6 +292,7 @@ const handleModalSubmit = async function(interaction){
 const handleButtonInteraction = async function(interaction){
     if (interaction.customId === "post_proposal") await handlePostProposal(interaction);
     else if (interaction.customId === "change_difficulty") await handleChangeDifficulty(interaction);
+    else if (interaction.customId === "reject_proposal") await handleRejectProposal(interaction);
 };
 
 /**

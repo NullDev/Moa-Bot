@@ -14,11 +14,11 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
  *
  * @param {string} proposerMention
  * @param {string} difficulty
- * @param {boolean} posted
+ * @param {string} status
  * @returns {string}
  */
-const buildProposalContent = (proposerMention, difficulty, posted) =>
-    `**Integral Proposal**\nProposer: ${proposerMention}\nProposed Difficulty: ${difficulty}\nStatus: ${posted ? "✅ Posted" : "Not Posted"}`;
+const buildProposalContent = (proposerMention, difficulty, status) =>
+    `**Integral Proposal**\nProposer: ${proposerMention}\nProposed Difficulty: ${difficulty}\nStatus: ${status}`;
 
 export default {
     data: new SlashCommandBuilder()
@@ -76,10 +76,15 @@ export default {
                 .setLabel("Change Difficulty")
                 .setStyle(ButtonStyle.Secondary);
 
-            const row = new ActionRowBuilder().addComponents(postButton, changeDifficultyButton);
+            const rejectButton = new ButtonBuilder()
+                .setCustomId("reject_proposal")
+                .setLabel("Reject")
+                .setStyle(ButtonStyle.Danger);
+
+            const row = new ActionRowBuilder().addComponents(postButton, changeDifficultyButton, rejectButton);
 
             const proposalMessage = await proposalChannel.send({
-                content: buildProposalContent(`${interaction.user}`, difficulty, false),
+                content: buildProposalContent(`${interaction.user}`, difficulty, "Not Posted"),
                 files: [image],
                 components: [/** @type {any} */ (row)],
             });
