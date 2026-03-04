@@ -10,10 +10,10 @@ import Log from "../util/log.js";
 /**
  * Fail message
  *
- * @param {import("discord.js").MessageReaction} reaction
+ * @param {import("discord.js").MessageReaction | import("discord.js").PartialMessageReaction} reaction
  * @param {import("discord.js").TextChannel | import("discord.js").NewsChannel | import("discord.js").ThreadChannel} channel
- * @param {import("discord.js").User} solver
- * @param {import("discord.js").User} user
+ * @param {import("discord.js").User | import("discord.js").PartialUser} solver
+ * @param {import("discord.js").User | import("discord.js").PartialUser} user
  * @return {Promise<void>}
  */
 const fail = async function(reaction, channel, solver, user){
@@ -28,8 +28,8 @@ const fail = async function(reaction, channel, solver, user){
 /**
  * Handle messageReactionAdd event
  *
- * @param {import("discord.js").MessageReaction} reaction
- * @param {import("discord.js").User} user
+ * @param {import("discord.js").MessageReaction | import("discord.js").PartialMessageReaction} reaction
+ * @param {import("discord.js").User | import("discord.js").PartialUser} user
  * @return {Promise<void>}
  */
 const messageReactionAdd = async function(reaction, user){

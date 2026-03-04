@@ -8,8 +8,8 @@ import Log from "../util/log.js";
 /**
  * Handle messageReactionRemove event
  *
- * @param {import("discord.js").MessageReaction} reaction
- * @param {import("discord.js").User} user
+ * @param {import("discord.js").MessageReaction | import("discord.js").PartialMessageReaction} reaction
+ * @param {import("discord.js").User | import("discord.js").PartialUser} user
  * @return {Promise<void>}
  */
 const messageReactionRemove = async function(reaction, user){
