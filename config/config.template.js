@@ -9,6 +9,7 @@ export default {
         guild_id: "",
         daily_int_channel: "",
         daily_int_role: "",
+        int_proposal_channel: "",
         meme_channel: "",
         general_channel: "",
         moabot: "",
