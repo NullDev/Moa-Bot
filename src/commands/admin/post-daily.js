@@ -1,6 +1,5 @@
 import { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits, MessageFlags } from "discord.js";
-import { config } from "../../../config/config.js";
-import integralDb from "../../util/integralDb.js";
+import { postIntegral } from "../../util/postIntegral.js";
 import Log from "../../util/log.js";
 
 // ========================= //
@@ -8,40 +7,6 @@ import Log from "../../util/log.js";
 // ========================= //
 
 const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
-
-/**
- * Get ordinal suffix for a day number
- *
- * @param {number} day
- * @returns {string}
- */
-const getOrdinalSuffix = function(day){
-    if (day > 3 && day < 21) return "th";
-    switch (day % 10){
-        case 1: return "st";
-        case 2: return "nd";
-        case 3: return "rd";
-        default: return "th";
-    }
-};
-
-/**
- * Format date as "Thursday 8th January 2026"
- *
- * @param {Date} date
- * @returns {string}
- */
-const formatDate = function(date){
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-    const dayName = days[date.getDay()];
-    const day = date.getDate();
-    const monthName = months[date.getMonth()];
-    const year = date.getFullYear();
-
-    return `${dayName} ${day}${getOrdinalSuffix(day)} ${monthName} ${year}`;
-};
 
 export default {
     data: new SlashCommandBuilder()
@@ -96,7 +61,6 @@ export default {
                 });
             }
 
-            // Parse date override if provided
             let postDate = new Date();
             if (dateOverride){
                 const parsed = new Date(dateOverride);
@@ -108,47 +72,14 @@ export default {
                 postDate = parsed;
             }
 
-            const channelId = config.ids.daily_int_channel;
-            const roleId = config.ids.daily_int_role;
-
-            if (!channelId || !roleId){
-                return await interaction.editReply({
-                    content: "Daily integral channel or role is not configured!",
-                });
-            }
-
-            const channel = await interaction.client.channels.fetch(channelId);
-            if (!channel?.isTextBased() || !("send" in channel)){
-                return await interaction.editReply({
-                    content: "Could not find the daily integral channel!",
-                });
-            }
-
-            const dateStr = formatDate(postDate);
-            let messageContent = `# ${dateStr} Integral (${difficulty})`;
-            messageContent += `\nProposed by: ${proposedBy}`;
-
-            const integralMessage = await channel.send({
-                content: messageContent,
-                files: [image],
-            });
-
-            const thread = await integralMessage.startThread({
-                name: `${dateStr} - ${difficulty}`,
-                autoArchiveDuration: 1440,
-            });
-
-            await thread.send({
-                content: `<@&${roleId}>`,
-            });
-
-            const integralKey = `guild-${interaction.guildId}.integral-${integralMessage.id}`;
-            await integralDb.set(`${integralKey}.date`, postDate.toISOString());
-            await integralDb.set(`${integralKey}.difficulty`, difficulty);
-            await integralDb.set(`${integralKey}.threadId`, thread.id);
-            await integralDb.set(`${integralKey}.imageUrl`, image.url);
-            await integralDb.set(`${integralKey}.solvers`, []);
-            await integralDb.set(`${integralKey}.proposedBy`, proposedBy.id);
+            const { integralMessage } = await postIntegral(
+                interaction.client,
+                interaction.guildId ?? "",
+                image,
+                difficulty,
+                proposedBy,
+                postDate,
+            );
 
             Log.info(`Posted daily integral: ${integralMessage.id} by ${interaction.user.tag}`);
 
