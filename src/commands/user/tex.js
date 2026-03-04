@@ -1,5 +1,7 @@
 import { SlashCommandBuilder, InteractionContextType } from "discord.js";
 import texRender from "../../util/texRender.js";
+import integralDb from "../../util/integralDb.js";
+import Log from "../../util/log.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -44,7 +46,7 @@ export default {
         for await (const chunk of stream) chunks.push(chunk);
         const buffer = Buffer.concat(chunks);
 
-        return await interaction.editReply({
+        const message = await interaction.editReply({
             files: [
                 {
                     attachment: buffer,
@@ -52,5 +54,17 @@ export default {
                 },
             ],
         });
+
+        try {
+            await message.react("<:del:1478725030979305482>");
+        }
+        catch (error){
+            const err = error instanceof Error ? error : new Error(String(error));
+            Log.error("Error adding reaction: ", err);
+        }
+
+        await integralDb.set(`guild-${interaction.guildId}.tex-${message.id}`, interaction.user.id);
+
+        return message;
     },
 };

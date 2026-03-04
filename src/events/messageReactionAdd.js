@@ -46,6 +46,22 @@ const messageReactionAdd = async function(reaction, user){
         }
     }
 
+    if (reaction.emoji.id === "1478725030979305482"){
+        const texKey = `guild-${reaction.message.guildId}.tex-${reaction.message.id}`;
+        const texOwner = await integralDb.get(texKey);
+
+        if (!texOwner) return;
+
+        if (user.id !== texOwner){
+            await reaction.users.remove(user.id);
+            return;
+        }
+
+        await integralDb.delete(texKey);
+        await reaction.message.delete();
+        return;
+    }
+
     if (reaction.emoji.name !== "✅") return;
 
     const roleSelectKey = `guild-${reaction.message.guildId}.role-select-${reaction.message.id}`;
