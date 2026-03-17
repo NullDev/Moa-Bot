@@ -281,7 +281,7 @@ const handleRejectProposal = async function(interaction){
         components: [/** @type {any} */ (buildDisabledRow())],
     });
 
-    Log.info(`Proposal ${msgId} rejected by ${interaction.user.tag}`);
+    return Log.info(`Proposal ${msgId} rejected by ${interaction.user.tag}`);
 };
 
 /**

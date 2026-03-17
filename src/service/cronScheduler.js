@@ -30,7 +30,7 @@ const scheduleCrons = async function(client){
             return;
         }
 
-        const mathFact = getRandomMathFact();
+        const mathFact = await getRandomMathFact(true);
         const formattedFact = mathFact.charAt(0).toLowerCase() + mathFact.slice(1);
         const finalFact = formattedFact.endsWith(".") ? formattedFact.slice(0, -1) : formattedFact;
 

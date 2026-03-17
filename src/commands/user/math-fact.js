@@ -17,10 +17,12 @@ export default {
      * @param {import("discord.js").ChatInputCommandInteraction} interaction
      */
     async execute(interaction){
+        const fact = await getRandomMathFact();
+
         const embed = {
             color: defaults.embed_color,
             title: ":abacus:┃Random Math Fact",
-            description: ":heavy_minus_sign::heavy_minus_sign::heavy_minus_sign: \n" + getRandomMathFact() + "\n:heavy_minus_sign::heavy_minus_sign::heavy_minus_sign:",
+            description: ":heavy_minus_sign::heavy_minus_sign::heavy_minus_sign: \n" + fact + "\n:heavy_minus_sign::heavy_minus_sign::heavy_minus_sign:",
             footer: {
                 text: `Requested by ${interaction.user.displayName ?? interaction.user.tag}`,
                 icon_url: interaction.user.displayAvatarURL(),
