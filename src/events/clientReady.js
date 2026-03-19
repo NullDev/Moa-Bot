@@ -31,8 +31,9 @@ const clientReady = async function(client){
     await setStatus(client);
 
     Log.wait("Exporting Server Emojis to JSON file...");
+    /** @type {Record<string, string>} */
     const emojiData = {};
-    client.emojis.cache.forEach(emoji => { // @ts-ignore
+    client.emojis.cache.forEach(emoji => {
         emojiData[":" + emoji.name + ":"] = "<" + (emoji.animated ? "a" : "") + ":" + emoji.name + ":" + emoji.id + ">";
     });
     fs.writeFileSync("data/emojis.json", JSON.stringify(emojiData, null, 4), { encoding: "utf-8" });
