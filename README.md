@@ -59,5 +59,7 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | ids: <br> `general_channel` | ID of the general channel | string | N/A |
 | ids: <br> `daily_int_role` | ID of the daily integral role | string | N/A |
 | ids: <br> `moabot` | ID of the Moa Bot user | string | N/A |
+| emkc | EMKC API Key for fetching integrals | string | N/A |
+| ai_included_channels | Array of channel IDs that the AI should learn from | string-array | [] |
 
 <hr>

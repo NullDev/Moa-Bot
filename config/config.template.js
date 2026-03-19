@@ -15,4 +15,7 @@ export default {
         moabot: "",
     },
     emkc: "",
+    ai_included_channels: [
+        "",
+    ],
 };
