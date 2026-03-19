@@ -1,9 +1,13 @@
 import devCmd from "../service/devCmd.js";
+import { MessageLearner } from "../ai/MsgLearn.js";
 import { config } from "../../config/config.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
 // ========================= //
+
+const brain = new MessageLearner();
+await brain.init();
 
 /**
  * Handle messageCreate event
@@ -20,6 +24,23 @@ const messageCreate = async function(message){
     }
 
     if (message.partial) return;
+
+    if (config.ai_included_channels.includes(message.channelId)
+        || (
+            message.channel.isThread()
+            && message.channel.parentId
+            && config.ai_included_channels.includes(message.channel.parentId)
+        )
+    ){
+        brain.learn({
+            id: message.id,
+            content: message.content,
+            channelId: message.channelId, // @ts-ignore
+            authorId: message.author.id,
+            replyToId: message.reference?.messageId ?? null,
+            createdTimestamp: message.createdTimestamp,
+        });
+    }
 
     const msg = message.content.trim().toLowerCase();
 
