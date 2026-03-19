@@ -32,6 +32,14 @@ const messageCreate = async function(message){
             && config.ai_included_channels.includes(message.channel.parentId)
         )
     ){
+        if (
+            message.content.startsWith(",tex")
+            || message.content.startsWith(",texsp")
+            || message.content.includes("tikzpicture")
+            || /\$(?:\\.|[^$\\])+\$/.test(message.content)
+            || /\\\[(?:\\.|[^\\])+\\\]/.test(message.content)
+        ) return;
+
         brain.learn({
             id: message.id,
             content: message.content,
