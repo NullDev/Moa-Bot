@@ -10,29 +10,50 @@ import Log from "../../util/log.js";
 const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 
 /**
- * Fetch every message from a channel/thread in chronological order (oldest first).
- * Uses `after` pagination so Discord returns messages in ascending order.
+ * Crawl one channel/thread, processing and writing each batch of 100 to the
+ * DB as it arrives instead of buffering everything in memory first.
  *
  * @param {import("discord.js").TextBasedChannel} channel
- * @returns {Promise<import("discord.js").Message[]>}
+ * @param {string} channelId
+ * @param {import("../../ai/MsgLearn.js").MessageLearner} brain
+ * @param {{ added: number, pairs: number, skipped: number }} counters
  */
-async function fetchAllMessages(channel){
-    const all = [];
-    let after = "0";
+async function crawlChannel(channel, channelId, brain, counters){
+    let after    = "0";
+    let batches  = 0;
 
     while (true){
         const fetched = await channel.messages.fetch({ limit: 100, after });
         if (!fetched.size) break;
 
-        // "after" returns ascending order, but sort defensively
-        const sorted = [...fetched.values()].sort((a, b) => a.createdTimestamp - b.createdTimestamp);
-        all.push(...sorted);
-        after = sorted[sorted.length - 1].id;
+        // "after" returns ascending order, sort defensively
+        const batch = [...fetched.values()].sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+        for (const msg of batch){
+            if (msg.author.bot || msg.system) continue;
+
+            const { inserted, paired } = brain.crawlLearn({
+                id: msg.id,
+                content: msg.content,
+                channelId,
+                authorId: msg.author.id,
+                replyToId: msg.reference?.messageId ?? null,
+                createdTimestamp: msg.createdTimestamp,
+            });
+
+            if (inserted){ counters.added++; if (paired) counters.pairs++; }
+            else counters.skipped++;
+        }
+
+        after = batch[batch.length - 1].id;
+        batches++;
+
+        if (batches % 10 === 0){
+            Log.info(`Brain crawl: ${channelId} — batch ${batches} done (+${counters.added} total so far).`);
+        }
 
         if (fetched.size < 100) break;
     }
-
-    return all;
 }
 
 export default {
@@ -50,49 +71,26 @@ export default {
 
         const channels = config.ai_included_channels.filter(Boolean);
         if (!channels.length){
-            return await interaction.editReply({ content: "No AI channels configured." });
+            await interaction.editReply({ content: "No AI channels configured." });
+            return;
         }
 
-        const brain = new MessageLearner();
+        const brain    = new MessageLearner();
         await brain.init();
 
-        let added   = 0;
-        let pairs   = 0;
-        let skipped = 0;
+        const counters = { added: 0, pairs: 0, skipped: 0 };
 
-        /**
-         * @param {import("discord.js").Message[]} msgs
-         * @param {string} channelId
-         */
-        const processMsgs = (msgs, channelId) => {
-            for (const msg of msgs){
-                if (msg.author.bot || msg.system) continue;
-
-                const { inserted, paired } = brain.crawlLearn({
-                    id: msg.id,
-                    content: msg.content,
-                    channelId,
-                    authorId: msg.author.id,
-                    replyToId: msg.reference?.messageId ?? null,
-                    createdTimestamp: msg.createdTimestamp,
-                });
-
-                if (inserted){ added++; if (paired) pairs++; }
-                else skipped++;
-            }
-        };
+        await interaction.editReply({ content: "Brain crawl started. Follow progress in the terminal." });
 
         try {
             Log.info(`Brain crawl started - ${channels.length} channel(s) to process.`);
 
             for (let i = 0; i < channels.length; i++){
-                const channelId = channels[i];
-                const beforeAdded   = added;
-                const beforeSkipped = skipped;
+                const channelId    = channels[i];
+                const beforeAdded  = counters.added;
+                const beforeSkipped = counters.skipped;
 
-                await interaction.editReply({
-                    content: `Crawling channel ${i + 1}/${channels.length} (<#${channelId}>)...`,
-                });
+                Log.info(`Brain crawl: starting channel ${i + 1}/${channels.length} (${channelId}).`);
 
                 const channel = await interaction.client.channels.fetch(channelId).catch(() => null);
                 if (!channel?.isTextBased()){
@@ -100,8 +98,7 @@ export default {
                     continue;
                 }
 
-                const msgs = await fetchAllMessages(channel);
-                processMsgs(msgs, channelId);
+                await crawlChannel(channel, channelId, brain, counters);
 
                 if ("threads" in channel){
                     const threadList = [];
@@ -123,32 +120,21 @@ export default {
                     }
 
                     for (const thread of threadList){
-                        const threadMsgs = await fetchAllMessages(thread);
-                        processMsgs(threadMsgs, thread.id);
+                        await crawlChannel(thread, thread.id, brain, counters);
                     }
                 }
 
                 Log.info(
                     `Brain crawl: channel ${channelId} done - ` +
-                    `+${added - beforeAdded} imported, ${skipped - beforeSkipped} skipped.`,
+                    `+${counters.added - beforeAdded} imported, ${counters.skipped - beforeSkipped} skipped.`,
                 );
             }
 
-            Log.info(`Brain crawl all done - total: +${added} messages, +${pairs} pairs, ${skipped} skipped.`);
-
-            return await interaction.editReply({
-                content: [
-                    "**Brain crawl complete!**",
-                    `- **${added}** new messages added`,
-                    `- **${pairs}** new pairs added`,
-                    `- **${skipped}** messages already in DB (skipped)`,
-                ].join("\n"),
-            });
+            Log.info(`Brain crawl all done - total: +${counters.added} messages, +${counters.pairs} pairs, ${counters.skipped} skipped.`);
         }
         catch (error){
             const err = error instanceof Error ? error : new Error(String(error));
             Log.error("Brain crawl error: ", err);
-            return await interaction.editReply({ content: `Crawl failed: ${err.message}` });
         }
         finally {
             brain.db.close();
