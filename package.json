@@ -12,8 +12,8 @@
     "start:dev": "npm run lint && cross-env NODE_ENV=development node src/app.js",
     "start:prod": "cross-env NODE_ENV=production node src/app.js",
     "start": "npm run start:dev",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . --ignore-pattern .venv",
+    "lint:fix": "eslint . --fix --ignore-pattern .venv",
     "generate-config": "node scripts/generate-config.js",
     "pull-and-restart": "node scripts/pull-and-restart.js"
   },
