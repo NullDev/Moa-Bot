@@ -39,6 +39,24 @@ export class MessageLearner {
     }
 
     /**
+     * Return true if the content looks like LaTeX and should not be learned
+     *
+     * @param {string} s
+     * @return {boolean}
+     * @memberof MessageLearner
+     */
+    isLatex(s){
+        if (!s) return false;
+        return (
+            s.startsWith(",tex")
+            || s.startsWith(",texsp")
+            || s.includes("tikzpicture")
+            || /\$(?:\\.|[^$\\])+\$/.test(s)
+            || /\\\[(?:\\.|[^\\])+\\\]/.test(s)
+        );
+    }
+
+    /**
      * Learn from a message
      *
      * @param {import("discord.js").Message} msg
@@ -47,6 +65,7 @@ export class MessageLearner {
      */
     async learn(msg){
         if (!msg || !msg.id) return;
+        if (this.isLatex(msg.content)) return;
         const ts = msg.createdTimestamp ?? Date.now();
         const clean = this.cleanText(msg.content);
         if (!clean) return;
@@ -119,11 +138,11 @@ export class MessageLearner {
     cleanText(s){
         if (!s) return "";
         let t = s;
-        t = t.replace(/```[\s\S]*?```/g, " ").replace(/`[^`]*`/g, " "); // code blocks
+        t = t.replace(/```[\s\S]*?```/g, " ").replace(/`[^`]*`/g, " ");                  // code blocks
         t = t.replace(/https?:\/\/[\w.-]+(?:\/[\w\-._~:/?#[\]@!$&'()*+,;=.]+)?/gi, " "); // URLs
-        t = t.replace(/<@&?\d+>/g, " ").replace(/<#!?\d+>/g, " "); // mentions
-        t = t.replace(/<a?:\w+:\d+>/g, " "); // custom emoji
-        t = t.replace(/[\n\r]+/g, " ").replace(/\s{2,}/g, " ").trim(); // whitespace
+        t = t.replace(/<@&?\d+>/g, " ").replace(/<#!?\d+>/g, " ");                       // mentions
+        t = t.replace(/<a?:\w+:\d+>/g, " ");                                             // custom emoji
+        t = t.replace(/[\n\r]+/g, " ").replace(/\s{2,}/g, " ").trim();                   // whitespace
         return t.toLowerCase();
     }
 
@@ -139,5 +158,67 @@ export class MessageLearner {
         this.db.prepare(
             "INSERT INTO pairs (parentKey, reply, ts) VALUES (?, ?, ?)",
         ).run(parent, reply, ts);
+    }
+
+    /**
+     * Check whether a message id is already stored
+     *
+     * @param {string} id
+     * @return {boolean}
+     * @memberof MessageLearner
+     */
+    has(id){
+        return !!this.db.prepare("SELECT 1 FROM messages WHERE id = ?").get(id);
+    }
+
+    /**
+     * Learn from a message during a bulk crawl.
+     * Identical pair logic to learn(), but:
+     *  - No merge window (historical messages keep their own IDs)
+     *  - INSERT OR IGNORE instead of INSERT OR REPLACE (never overwrites)
+     *
+     * @param {{ id: string, content: string, channelId: string, authorId: string, replyToId: string|null, createdTimestamp: number }} msg
+     * @return {{ inserted: boolean, paired: boolean }}
+     * @memberof MessageLearner
+     */
+    crawlLearn(msg){
+        if (!msg?.id) return { inserted: false, paired: false };
+        if (this.isLatex(msg.content)) return { inserted: false, paired: false };
+
+        const clean = this.cleanText(msg.content);
+        if (!clean) return { inserted: false, paired: false };
+
+        if (this.has(msg.id)) return { inserted: false, paired: false };
+
+        const ts        = msg.createdTimestamp ?? Date.now();
+        const replyToId = msg.replyToId ?? null;
+
+        this.db.prepare(
+            `INSERT OR IGNORE INTO messages (id, channelId, content, authorId, replyToId, ts)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+        ).run(msg.id, msg.channelId, clean, msg.authorId, replyToId, ts);
+
+        // Derive training pair
+        let parentContent = null;
+        if (replyToId){
+            const row = /** @type {any} */ (
+                this.db.prepare("SELECT content FROM messages WHERE id = ?").get(replyToId)
+            );
+            if (row?.content) parentContent = row.content;
+        }
+        else if (msg.channelId){
+            const row = /** @type {any} */ (
+                this.db.prepare(
+                    `SELECT content FROM messages
+                    WHERE channelId = ? AND authorId != ?
+                    ORDER BY ts DESC LIMIT 1`,
+                ).get(msg.channelId, msg.authorId)
+            );
+            if (row?.content) parentContent = row.content;
+        }
+
+        if (parentContent) this.addPair(parentContent, clean, ts);
+
+        return { inserted: true, paired: !!parentContent };
     }
 }
