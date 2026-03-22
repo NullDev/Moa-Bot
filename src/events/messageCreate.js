@@ -1,14 +1,14 @@
 import devCmd from "../service/devCmd.js";
 import { MessageLearner } from "../ai/MsgLearn.js";
-import { PythonAIWorker } from "../ai/getAiReply.js";
+// import { PythonAIWorker } from "../ai/getAiReply.js";
 import { config } from "../../config/config.js";
-import Log from "../util/log.js";
+// import Log from "../util/log.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
 // ========================= //
 
-export const aiWorker = new PythonAIWorker();
+// export const aiWorker = new PythonAIWorker();
 
 const brain = new MessageLearner();
 await brain.init();
@@ -30,7 +30,7 @@ const getBotName = message => {
  * Clean message content by removing mentions and trimming whitespace
  *
  * @param {import("discord.js").Message} message
- */
+ */ // eslint-disable-next-line no-unused-vars
 const cleanMsg = message => message.cleanContent.replace(/<a?(:[a-zA-Z0-9_]+:)[0-9]+>/g, "$1")
     .replace(`<@${message.client.user.id}>`, "")
     .replace(`@${getBotName(message)} `, "")
@@ -69,6 +69,7 @@ const messageCreate = async function(message){
         });
     }
 
+    /*
     if (message.mentions.has(message.client.user)){
         if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
         if ("sendTyping" in message.channel) message.channel.sendTyping();
@@ -106,6 +107,7 @@ const messageCreate = async function(message){
 
         return;
     }
+    */
 
     const msg = message.content.trim().toLowerCase();
 
