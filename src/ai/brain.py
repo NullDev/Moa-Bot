@@ -285,9 +285,20 @@ class MoaBot:
     def _quality_ok(self, text: str) -> bool:
         nt = normalize(text)
         toks = tokenize(nt)
-        if not nt: return False
-        if nt in self._recent_norm: return False
-        if len(toks) > 20: return False
+        if not nt:
+            return False
+        if nt in self._recent_norm:
+            return False
+        if len(toks) < 2 or len(toks) > 14:
+            return False
+        counts = Counter(toks)
+        if max(counts.values(), default=0) >= 3:
+            return False
+        if len(set(toks)) / max(1, len(toks)) < 0.45:
+            return False
+        one_char = sum(1 for t in toks if len(t) == 1)
+        if one_char >= max(3, len(toks) // 2):
+            return False
         # avoid weird loops
         for i in range(len(toks) - 2):
             if toks[i] == toks[i + 1] == toks[i + 2]:
@@ -297,11 +308,9 @@ class MoaBot:
     def reply(self, text: str) -> str:
         hit = self._pick_retrieval(text)
         if hit is not None:
-            if random.random() < 0.2:
-                candidate = self._mutate_reply(hit, text)
-            else:
-                candidate = hit
-            if not self._quality_ok(candidate): candidate = hit
+            candidate = hit
+            # if not self._quality_ok(candidate):
+            #     candidate = self._mutate_reply(candidate, text)
         else:
             candidate = ""
             for _ in range(6):
