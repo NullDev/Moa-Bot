@@ -10,6 +10,7 @@ from difflib import get_close_matches
 from typing import List, Optional, Dict, Tuple
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.pipeline import FeatureUnion
 from sklearn.metrics.pairwise import cosine_similarity
 
 # ========================= #
@@ -148,12 +149,20 @@ class RetrievalBrain:
         self.replies = [r for _, r, _ in cleaned]
         self.reply_norms = [nr for _, _, nr in cleaned]
         self.reply_freq = Counter(self.reply_norms)
-        self.vectorizer = TfidfVectorizer(
-            analyzer="char_wb",
-            ngram_range=(2, 5),
-            min_df=1,
-            sublinear_tf=True,
-        )
+        self.vectorizer = FeatureUnion([
+            ("word", TfidfVectorizer(
+                analyzer="word",
+                ngram_range=(1, 2),
+                min_df=2,
+                sublinear_tf=True,
+            )),
+            ("char", TfidfVectorizer(
+                analyzer="char_wb",
+                ngram_range=(3, 5),
+                min_df=1,
+                sublinear_tf=True,
+            )),
+        ])
         self.matrix = self.vectorizer.fit_transform(self.keys)
 
     def top_candidates(self, text: str, limit: int = 30) -> List[dict]:
@@ -288,7 +297,10 @@ class MoaBot:
     def reply(self, text: str) -> str:
         hit = self._pick_retrieval(text)
         if hit is not None:
-            candidate = self._mutate_reply(hit, text)
+            if random.random() < 0.2:
+                candidate = self._mutate_reply(hit, text)
+            else:
+                candidate = hit
             if not self._quality_ok(candidate): candidate = hit
         else:
             candidate = ""
