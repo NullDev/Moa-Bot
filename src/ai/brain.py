@@ -337,10 +337,7 @@ class MoaBot:
             return None, -999.0
         scored = [(self._score_candidate(text, c), c) for c in cands]
         scored.sort(key=lambda x: x[0], reverse=True)
-        best_score, best_cand = scored[0]
-        second_score = scored[1][0] if len(scored) > 1 else -999.0
-        margin = best_score - second_score
-        # dedupe by normalized reply
+        # dedupe by normalized reply first
         unique = []
         seen = set()
         for s, c in scored:
@@ -351,16 +348,15 @@ class MoaBot:
             unique.append((s, c))
         if not unique:
             return None, -999.0
-        # strong hit: take top directly
+        best_score, best_cand = unique[0]
+        second_score = unique[1][0] if len(unique) > 1 else -999.0
+        margin = best_score - second_score
+        # strong hit
         if best_score >= 0.95 and margin >= 0.12:
             return best_cand["reply"], best_score
-        # medium hit: sample only from very close good candidates
-        if best_score >= 0.55:
-            shortlist = [(s, c) for s, c in unique[:6] if s >= best_score - 0.20 and s > 0.40]
-            if shortlist:
-                weights = [max(0.05, s) for s, _ in shortlist]
-                picked = random.choices([c["reply"] for _, c in shortlist], weights=weights, k=1)[0]
-                return picked, best_score
+        # medium hit: return top directly only if still clearly ahead
+        if best_score >= 0.70 and margin >= 0.08:
+            return best_cand["reply"], best_score
         return None, best_score
 
     def _mutate_reply(self, base_reply: str, user_text: str) -> str:
