@@ -44,11 +44,11 @@ class EmojiResolver:
         return re.sub(r":([A-Za-z0-9_]+):", replace, text).strip()
 
 def normalize(text: str) -> str:
-    text = text.lower().strip()
+    text = (text or "").lower().strip()      # lowercase and trim
     text = re.sub(r"<@!?\d+>", "", text)     # remove Discord mentions
     text = re.sub(r"<a?:\w+:\d+>", "", text) # remove custom emojis
     text = re.sub(r"https?://\S+", "", text) # remove URLs
-    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"\s+", " ", text).strip() # collapse whitespace
     return text
 
 def tokenize(text: str) -> List[str]:
@@ -56,25 +56,55 @@ def tokenize(text: str) -> List[str]:
 
 def is_question(text: str) -> bool:
     t = normalize(text)
-    return "?" in text or any(w in t.split() for w in [
+    words = set(t.split())
+    return "?" in (text or "") or any(w in words for w in [
         "why", "how", "who", "where", "when", "what", "which",
-        "whom", "whose", "huh", "wut", "wat",
+        "whom", "whose", "huh", "wut", "wat", "can", "could",
+        "would", "should", "do", "does", "did", "is", "are",
     ])
 
 def lexical_overlap(a: str, b: str) -> float:
     aa = set(tokenize(a))
     bb = set(tokenize(b))
-    if not aa or not bb: return 0.0
+    if not aa or not bb:
+        return 0.0
     return len(aa & bb) / len(aa | bb)
 
 def looks_generic(text: str) -> bool:
-    t = normalize(text)
-    toks = tokenize(t)
+    toks = tokenize(text)
     generic = {
         "ye", "yea", "yeah", "yes", "nah", "no", "lol", "kk",
-        "okay", "k", "okay", "xd", "lmao", "moa", "hehe", "fr", 
+        "okay", "k", "xd", "lmao", "moa", "hehe", "fr", "real",
+        "true", "fair", "crazy", "wild",
     }
     return len(toks) <= 2 and all(tok in generic for tok in toks)
+
+def looks_math(text: str) -> bool:
+    t = normalize(text)
+    if not t:
+        return False
+    math_words = {
+        "integral", "derivative", "limit", "prove", "proof", "sum", "product",
+        "factor", "solve", "equation", "theorem", "lemma", "matrix", "vector",
+        "eigen", "series", "sequence", "prime", "mod", "modulo", "graph",
+        "function", "domain", "range", "log", "ln", "sin", "cos", "tan",
+        "dx", "dy", "sqrt",
+    }
+    if any(w in t.split() for w in math_words):
+        return True
+    if re.search(r"[\d=+\-*/^<>()[\]{}]|\\[a-zA-Z]+", text or ""):
+        return True
+    return False
+
+def looks_uncertain_reply(text: str) -> bool:
+    t = normalize(text)
+    if not t: return False
+    markers = [
+        "idk", "i dont know", "i don't know", "maybe", "probably",
+        "bro what", "what", "huh", "wtf", "no clue", "unsure",
+        "confused", "uh", "hmmm", "i think", "2 maybe",
+    ]
+    return any(m in t for m in markers)
 
 class MarkovBrain:
     def __init__(self):
@@ -92,39 +122,53 @@ class MarkovBrain:
             if len(words) >= 2: self.starters.append((words[0], words[1]))
             else: self.starters.append((words[0],))
             for i in range(len(words)):
-                if i + 2 < len(words): self.trigrams[(words[i], words[i + 1])].append(words[i + 2])
-                if i + 1 < len(words): self.bigrams[words[i]].append(words[i + 1])
+                if i + 2 < len(words):
+                    self.trigrams[(words[i], words[i + 1])].append(words[i + 2])
+                if i + 1 < len(words):
+                    self.bigrams[words[i]].append(words[i + 1])
 
     def generate(self, seed: str = "", max_words: int = 20) -> str:
         words = tokenize(seed)
         result: List[str] = []
-        if len(words) >= 2 and (words[-2], words[-1]) in self.trigrams: result = [words[-2], words[-1]]
-        elif len(words) >= 1 and words[-1] in self.bigrams: result = [words[-1]]
-        elif self.starters: result = list(random.choice(self.starters))
-        else: return ""
+        if len(words) >= 2 and (words[-2], words[-1]) in self.trigrams:
+            result = [words[-2], words[-1]]
+        elif len(words) >= 1 and words[-1] in self.bigrams:
+            result = [words[-1]]
+        elif self.starters:
+            result = list(random.choice(self.starters))
+        else:
+            return ""
         while len(result) < max_words:
             if len(result) >= 2 and (result[-2], result[-1]) in self.trigrams:
                 nxt = random.choice(self.trigrams[(result[-2], result[-1])])
-            elif result[-1] in self.bigrams: nxt = random.choice(self.bigrams[result[-1]])
-            else: break
-            # avoid ugly loops
-            if len(result) >= 3 and nxt == result[-1] == result[-2]: break
+            elif result[-1] in self.bigrams:
+                nxt = random.choice(self.bigrams[result[-1]])
+            else:
+                break
+            if len(result) >= 3 and nxt == result[-1] == result[-2]:
+                break
             result.append(nxt)
-            if len(result) >= 5 and random.random() < 0.22: break
+            if len(result) >= 5 and random.random() < 0.22:
+                break
         return " ".join(result).strip()
 
     def continue_from(self, prefix: str, extra_words: int = 8) -> str:
         base = tokenize(prefix)
-        if not base: return ""
+        if not base:
+            return ""
         result = base[:]
         while len(result) < len(base) + extra_words:
             if len(result) >= 2 and (result[-2], result[-1]) in self.trigrams:
                 nxt = random.choice(self.trigrams[(result[-2], result[-1])])
-            elif result[-1] in self.bigrams: nxt = random.choice(self.bigrams[result[-1]])
-            else: break
-            if nxt in result[-4:]: break
+            elif result[-1] in self.bigrams:
+                nxt = random.choice(self.bigrams[result[-1]])
+            else:
+                break
+            if nxt in result[-4:]:
+                break
             result.append(nxt)
-            if len(result) >= len(base) + 3 and random.random() < 0.35: break
+            if len(result) >= len(base) + 3 and random.random() < 0.35:
+                break
         return " ".join(result).strip()
 
 class RetrievalBrain:
@@ -141,9 +185,13 @@ class RetrievalBrain:
         for k, r in zip(keys, replies):
             nk = normalize(k)
             nr = normalize(r)
-            if nk and nr: cleaned.append((nk, r, nr))
+            if nk and nr:
+                cleaned.append((nk, r, nr))
         if not cleaned:
             self.keys, self.replies, self.reply_norms = [], [], []
+            self.reply_freq = Counter()
+            self.vectorizer = None
+            self.matrix = None
             return
         self.keys = [k for k, _, _ in cleaned]
         self.replies = [r for _, r, _ in cleaned]
@@ -165,17 +213,41 @@ class RetrievalBrain:
         ])
         self.matrix = self.vectorizer.fit_transform(self.keys)
 
-    def top_candidates(self, text: str, limit: int = 30) -> List[dict]:
-        if self.vectorizer is None or self.matrix is None or not text.strip():
+    def _query_sims(self, text: str) -> np.ndarray:
+        if self.vectorizer is None or self.matrix is None or not normalize(text):
+            return np.array([])
+        vec = self.vectorizer.transform([normalize(text)])
+        return cosine_similarity(vec, self.matrix).flatten()
+
+    def top_candidates(self, text: str, context: Optional[List[str]] = None, limit: int = 30) -> List[dict]:
+        if self.vectorizer is None or self.matrix is None:
             return []
-        q = normalize(text)
-        vec = self.vectorizer.transform([q])
-        sims = cosine_similarity(vec, self.matrix).flatten()
-        if sims.size == 0: return []
+        context = context or []
+        q0 = normalize(text)
+        if not q0:
+            return []
+        sims = self._query_sims(q0)
+        if sims.size == 0:
+            return []
+        # weighted multi-query instead of one mushy concatenated blob
+        if context:
+            prev1 = normalize(context[0]) if len(context) >= 1 else ""
+            prev2 = normalize(context[1]) if len(context) >= 2 else ""
+            if prev1:
+                q1 = f"{prev1} {q0}".strip()
+                s1 = self._query_sims(q1)
+                if s1.size == sims.size:
+                    sims = (sims * 0.80) + (s1 * 0.20)
+            if prev2 and prev1:
+                q2 = f"{prev2} {prev1} {q0}".strip()
+                s2 = self._query_sims(q2)
+                if s2.size == sims.size:
+                    sims = (sims * 0.95) + (s2 * 0.05)
         order = np.argsort(sims)[::-1][:limit]
         out = []
         for i in order:
-            if sims[i] <= 0: continue
+            if sims[i] <= 0:
+                continue
             out.append({
                 "parent": self.keys[i],
                 "reply": self.replies[i],
@@ -184,7 +256,7 @@ class RetrievalBrain:
                 "freq": self.reply_freq[self.reply_norms[i]],
             })
         return out
-        
+
 class MoaBot:
     def __init__(self, db_path: str = DB_PATH):
         self.retrieval = RetrievalBrain()
@@ -192,6 +264,7 @@ class MoaBot:
         self.emojis = EmojiResolver()
         self._recent_raw: deque = deque(maxlen=8)
         self._recent_norm: deque = deque(maxlen=8)
+        self._fallback_replies: List[str] = []
         self._load(db_path)
 
     def _load(self, db_path: str):
@@ -206,80 +279,112 @@ class MoaBot:
         messages = [r[0] for r in c.fetchall()]
         print(f"[brain] training markov on {len(messages)} messages…", file=sys.stderr)
         self.markov.train(messages)
+        # learned fallback bucket from your own corpus
+        c.execute("SELECT reply FROM pairs WHERE reply != ''")
+        raw_replies = [r[0] for r in c.fetchall()]
+        self._fallback_replies = [
+            r for r in raw_replies
+            if self._quality_ok(r) and (looks_uncertain_reply(r) or looks_generic(r) or len(tokenize(r)) <= 5)
+        ]
         conn.close()
         print("[brain] ready.\n", file=sys.stderr)
 
     def _score_candidate(self, inp: str, cand: dict) -> float:
-        score = cand["sim"] * 2.6
-        # penalize globally common replies
-        score -= math.log1p(cand["freq"]) * 0.45
-        # penalize recent repeats heavily
-        if cand["reply_norm"] in self._recent_norm: score -= 2.0
-        # generic tiny replies should lose unless similarity is very high
-        if looks_generic(cand["reply"]): score -= 0.7
-        # prefer some lexical relation, but not parroting
-        overlap = lexical_overlap(inp, cand["reply"])
-        score += overlap * 0.35
-        if overlap > 0.75: score -= 0.9
-        # question compatibility
-        if is_question(inp):
-            if "?" in cand["reply"]: score += 0.15
-            elif len(tokenize(cand["reply"])) <= 1: score -= 0.25
-        # length shaping
+        score = cand["sim"] * 3.1
+        # common replies are less interesting
+        score -= math.log1p(cand["freq"]) * 0.52
+        # heavily penalize repeats
+        if cand["reply_norm"] in self._recent_norm:
+            score -= 2.0
+        # parent should match the current input, not just vaguely
+        parent_overlap = lexical_overlap(inp, cand["parent"])
+        score += parent_overlap * 1.10
+        # small bonus for reply lexical relation, but avoid parroting
+        reply_overlap = lexical_overlap(inp, cand["reply"])
+        score += reply_overlap * 0.18
+        if reply_overlap > 0.75:
+            score -= 0.9
+        if looks_generic(cand["reply"]):
+            score -= 0.85
         in_len = len(tokenize(inp))
         out_len = len(tokenize(cand["reply"]))
-        if in_len <= 3 and out_len > 10: score -= 0.45
-        if in_len >= 8 and out_len <= 1: score -= 0.35
+        inp_is_q = is_question(inp)
+        inp_is_math = looks_math(inp)
+        parent_is_q = is_question(cand["parent"])
+        parent_is_math = looks_math(cand["parent"])
+        if inp_is_q and parent_is_q:
+            score += 0.25
+        if inp_is_q and out_len <= 1:
+            score -= 0.30
+        if inp_is_math != parent_is_math:
+            score -= 0.75
+        elif inp_is_math and parent_is_math:
+            score += 0.30
+        # short user input should not get essay replies
+        if in_len <= 3 and out_len > 10:
+            score -= 0.55
+        # long user input should not get ultra-short throwaways
+        if in_len >= 8 and out_len <= 1:
+            score -= 0.45
+        # giant lore dumps are rarely good
+        if out_len >= 28:
+            score -= 0.35
         return score
 
-    def _pick_retrieval(self, text: str) -> Optional[str]:
-        cands = self.retrieval.top_candidates(text, limit=35)
-        if not cands: return None
+    def _pick_retrieval(self, text: str, context: Optional[List[str]] = None) -> Tuple[Optional[str], float]:
+        cands = self.retrieval.top_candidates(text, context=context, limit=40)
+        if not cands:
+            return None, -999.0
         scored = [(self._score_candidate(text, c), c) for c in cands]
         scored.sort(key=lambda x: x[0], reverse=True)
-        # keep only reasonably good options
-        best = scored[0][0]
-        shortlisted = [c for s, c in scored if s >= best - 0.45 and s > 0.15]
-        if not shortlisted: return None
-        # dedupe near-identical replies
-        seen = set()
+        best_score, best_cand = scored[0]
+        second_score = scored[1][0] if len(scored) > 1 else -999.0
+        margin = best_score - second_score
+        # dedupe by normalized reply
         unique = []
-        for c in shortlisted:
+        seen = set()
+        for s, c in scored:
             nr = c["reply_norm"]
-            if nr in seen: continue
+            if nr in seen:
+                continue
             seen.add(nr)
-            unique.append(c)
-        if not unique: return None
-        top = unique[:5]
-        # weighted random among the top few
-        weights = []
-        for c in top:
-            s = max(0.05, self._score_candidate(text, c))
-            weights.append(s)
-        return random.choices([c["reply"] for c in top], weights=weights, k=1)[0]
+            unique.append((s, c))
+        if not unique:
+            return None, -999.0
+        # strong hit: take top directly
+        if best_score >= 0.95 and margin >= 0.12:
+            return best_cand["reply"], best_score
+        # medium hit: sample only from very close good candidates
+        if best_score >= 0.55:
+            shortlist = [(s, c) for s, c in unique[:6] if s >= best_score - 0.20 and s > 0.40]
+            if shortlist:
+                weights = [max(0.05, s) for s, _ in shortlist]
+                picked = random.choices([c["reply"] for _, c in shortlist], weights=weights, k=1)[0]
+                return picked, best_score
+        return None, best_score
 
     def _mutate_reply(self, base_reply: str, user_text: str) -> str:
         user_len = len(tokenize(user_text))
         user_is_question = is_question(user_text)
-        if random.random() < 0.55: return base_reply
-        max_extra = 3 if user_len <= 3 else 7
-        if random.random() < 0.55:
+        if random.random() < 0.72:
+            return base_reply
+        max_extra = 2 if user_len <= 3 else 5
+        if random.random() < 0.60:
             continued = self.markov.continue_from(
                 base_reply,
-                extra_words=random.randint(2, max_extra)
+                extra_words=random.randint(1, max_extra),
             )
             if continued and normalize(continued) != normalize(base_reply):
-                # don't let mutation drift too far away
-                if lexical_overlap(user_text, continued) >= lexical_overlap(user_text, base_reply) * 0.6:
-                    return continued
+                if lexical_overlap(base_reply, continued) >= 0.45:
+                    if not user_is_question or lexical_overlap(user_text, continued) > 0:
+                        return continued
         gen = self.markov.generate(
             seed=base_reply,
-            max_words=max(6, len(tokenize(base_reply)) + max_extra)
+            max_words=max(5, len(tokenize(base_reply)) + max_extra),
         )
-        if gen:
-            if lexical_overlap(base_reply, gen) >= 0.3:
-                if not user_is_question or "?" in gen or lexical_overlap(user_text, gen) > 0:
-                    return gen
+        if gen and lexical_overlap(base_reply, gen) >= 0.40:
+            if not user_is_question or lexical_overlap(user_text, gen) > 0:
+                return gen
         return base_reply
 
     def _quality_ok(self, text: str) -> bool:
@@ -289,36 +394,51 @@ class MoaBot:
             return False
         if nt in self._recent_norm:
             return False
-        if len(toks) < 2 or len(toks) > 14:
+        if len(toks) < 1 or len(toks) > 18:
             return False
         counts = Counter(toks)
         if max(counts.values(), default=0) >= 3:
             return False
-        if len(set(toks)) / max(1, len(toks)) < 0.45:
+        if len(toks) >= 4 and len(set(toks)) / max(1, len(toks)) < 0.40:
             return False
         one_char = sum(1 for t in toks if len(t) == 1)
         if one_char >= max(3, len(toks) // 2):
             return False
-        # avoid weird loops
         for i in range(len(toks) - 2):
             if toks[i] == toks[i + 1] == toks[i + 2]:
                 return False
         return True
 
-    def reply(self, text: str) -> str:
-        hit = self._pick_retrieval(text)
+    def _fallback_reply(self, text: str) -> str:
+        inp_is_math = looks_math(text)
+        inp_is_q = is_question(text)
+        pool = [r for r in self._fallback_replies if normalize(r) not in self._recent_norm]
+        if inp_is_math:
+            mathish = [r for r in pool if looks_math(r) or looks_uncertain_reply(r)]
+            if mathish:
+                pool = mathish
+        elif inp_is_q:
+            qish = [r for r in pool if len(tokenize(r)) <= 6]
+            if qish:
+                pool = qish
+        if pool:
+            return random.choice(pool)
+        # very last resort only
+        for _ in range(4):
+            gen = self.markov.generate(seed=text, max_words=10)
+            if self._quality_ok(gen):
+                return gen
+        return "idk man"
+
+    def reply(self, text: str, context: Optional[List[str]] = None) -> str:
+        context = context or []
+        hit, score = self._pick_retrieval(text, context=context)
         if hit is not None:
             candidate = hit
-            # if not self._quality_ok(candidate):
-            #     candidate = self._mutate_reply(candidate, text)
+            if score < 1.15 and self._quality_ok(candidate):
+                candidate = self._mutate_reply(candidate, text)
         else:
-            candidate = ""
-            for _ in range(6):
-                gen = self.markov.generate(seed=text, max_words=16)
-                if self._quality_ok(gen):
-                    candidate = gen
-                    break
-            if not candidate: candidate = "yea tbh"
+            candidate = self._fallback_reply(text)
         raw = self.emojis.resolve(candidate)
         self._recent_raw.append(raw)
         self._recent_norm.append(normalize(raw))
@@ -329,30 +449,38 @@ class MoaBot:
         sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         for line in sys.stdin:
             line = line.strip()
-            if not line: continue
+            if not line:
+                continue
             try:
                 req = json.loads(line)
                 if req.get("reload"):
                     self._load(DB_PATH)
-                    print(json.dumps({ "ok": True, "result": "reloaded" }), flush=True)
-                else:
-                    result = self.reply(req.get("text", ""))
-                    print(json.dumps({ "ok": True, "result": result }), flush=True)
+                    print(json.dumps({"ok": True, "result": "reloaded"}), flush=True)
+                    continue
+                text = req.get("text", "") or ""
+                context = req.get("context", []) or []
+                if not isinstance(context, list):
+                    context = []
+                result = self.reply(text, context=context)
+                print(json.dumps({"ok": True, "result": result}), flush=True)
             except Exception as e:
-                print(json.dumps({ "ok": False, "error": str(e) }), flush=True)
+                print(json.dumps({"ok": False, "error": str(e)}), flush=True)
 
     def chat(self):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        print("moa-ai — type something (ctrl+c to quit)\n")
+        print("moa-ai - type something (ctrl+c to quit)\n")
         try:
             while True:
                 user = input("you:     ").strip()
-                if not user: continue
+                if not user:
+                    continue
                 print(f"moa: {self.reply(user)}\n")
         except (KeyboardInterrupt, EOFError):
             print("\nbye!")
 
 if __name__ == "__main__":
     bot = MoaBot()
-    if len(sys.argv) > 1 and sys.argv[1] == "--serve": bot.serve()
-    else: bot.chat()
+    if len(sys.argv) > 1 and sys.argv[1] == "--serve":
+        bot.serve()
+    else:
+        bot.chat()

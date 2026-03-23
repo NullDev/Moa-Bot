@@ -17,7 +17,7 @@ export class MessageLearner {
     constructor(opts = {}){
         this.lookbackWindow = opts.lookbackWindow ?? 5;
         this.db = new Database("./data/brain.sqlite");
-        this.lastMsgByChannel = new Map(); // track last non-bot message for sequential pairing
+        this.lastMsgByChannel = new Map();
     }
 
     async init(){
@@ -60,79 +60,7 @@ export class MessageLearner {
     }
 
     /**
-     * Learn from a message
-     *
-     * @param {import("discord.js").Message} msg
-     * @return {Promise<void>}
-     * @memberof MessageLearner
-     */
-    async learn(msg){
-        if (!msg || !msg.id) return;
-        if (this.isLatex(msg.content)) return;
-        const ts = msg.createdTimestamp ?? Date.now();
-        const clean = this.cleanText(msg.content);
-        if (!clean) return;
-
-        // Merge consecutive messages from same author within lookbackWindow
-        if (msg.channelId){
-            const last = this.lastMsgByChannel.get(msg.channelId);
-            if (
-                last && // @ts-ignore
-                last.authorId === msg.authorId && !msg.replyToId &&
-                ts - last.ts < this.lookbackWindow * 1000
-            ){
-                const merged = (last.content + " " + clean).trim();
-                this.db.prepare("UPDATE messages SET content = ?, ts = ? WHERE id = ?").run(
-                    merged,
-                    ts,
-                    last.id,
-                );
-                this.lastMsgByChannel.set(msg.channelId, { ...last, content: merged, ts });
-                return;
-            }
-        }
-
-        // Insert into messages table
-        this.db.prepare(
-            `INSERT OR REPLACE INTO messages (id, channelId, content, authorId, replyToId, ts)
-            VALUES (?, ?, ?, ?, ?, ?)`, // @ts-ignore
-        ).run(msg.id, msg.channelId, clean, msg.authorId, msg.replyToId ?? null, ts);
-
-        // Derive training pair
-        let parentContent = null; // @ts-ignore
-        if (msg.replyToId){
-            const row = this.db
-                .prepare("SELECT content FROM messages WHERE id = ?") // @ts-ignore
-                .get(msg.replyToId); // @ts-ignore
-            if (row && row.content) parentContent = row.content;
-        }
-        else if (msg.channelId){
-            const row = this.db
-                .prepare(
-                    `SELECT content
-                    FROM messages
-                    WHERE channelId = ? AND authorId != ?
-                    ORDER BY ts DESC LIMIT 1`,
-                ) // @ts-ignore
-                .get(msg.channelId, msg.authorId); // @ts-ignore
-            if (row && row.content) parentContent = row.content;
-        }
-
-        if (parentContent){
-            this.addPair(parentContent, clean, ts);
-        }
-
-        // Update last message tracker
-        this.lastMsgByChannel.set(msg.channelId, {
-            id: msg.id,
-            content: clean, // @ts-ignore
-            authorId: msg.authorId,
-            ts,
-        });
-    }
-
-    /**
-     * Clean text for processing
+     * Clean the input text by removing code blocks, URLs, mentions, emojis, and extra whitespace. Also converts to lowercase.
      *
      * @param {string} s
      * @return {string}
@@ -141,16 +69,132 @@ export class MessageLearner {
     cleanText(s){
         if (!s) return "";
         let t = s;
-        t = t.replace(/```[\s\S]*?```/g, " ").replace(/`[^`]*`/g, " ");                  // code blocks
-        t = t.replace(/https?:\/\/[\w.-]+(?:\/[\w\-._~:/?#[\]@!$&'()*+,;=.]+)?/gi, " "); // URLs
-        t = t.replace(/<@&?\d+>/g, " ").replace(/<#!?\d+>/g, " ");                       // mentions
-        t = t.replace(/<a?:\w+:\d+>/g, " ");                                             // custom emoji
-        t = t.replace(/[\n\r]+/g, " ").replace(/\s{2,}/g, " ").trim();                   // whitespace
+        t = t.replace(/```[\s\S]*?```/g, " ").replace(/`[^`]*`/g, " ");
+        t = t.replace(/https?:\/\/[\w.-]+(?:\/[\w\-._~:/?#[\]@!$&'()*+,;=.]+)?/gi, " ");
+        t = t.replace(/<@&?\d+>/g, " ").replace(/<#!?\d+>/g, " ");
+        t = t.replace(/<a?:\w+:\d+>/g, " ");
+        t = t.replace(/[\n\r]+/g, " ").replace(/\s{2,}/g, " ").trim();
         return t.toLowerCase();
     }
 
     /**
-     * Add a parentKey -> reply pair to the database
+     * Tokenize text
+     *
+     * @param {string} s
+     * @return {Array<string>}
+     * @memberof MessageLearner
+     */
+    tokenize(s){
+        return this.cleanText(s).split(/\s+/).filter(Boolean);
+    }
+
+    /**
+     * check if message is a question
+     *
+     * @param {string} s
+     * @return {boolean}
+     * @memberof MessageLearner
+     */
+    isQuestion(s){
+        const t = this.cleanText(s);
+        const parts = new Set(this.tokenize(t));
+        return s.includes("?") || [
+            "why", "how", "who", "where", "when", "what", "which",
+            "whom", "whose", "huh", "wut", "wat", "can", "could",
+            "would", "should", "is", "are", "do", "does", "did",
+        ].some((w) => parts.has(w));
+    }
+
+    /**
+     * Check if the message looks mathy by looking for math-related keywords or symbols.
+     *
+     * @param {string} s
+     * @return {boolean}
+     * @memberof MessageLearner
+     */
+    looksMath(s){
+        const t = this.cleanText(s);
+        if (!t) return false;
+        const words = new Set(this.tokenize(t));
+        const mathWords = [
+            "integral", "derivative", "limit", "prove", "proof", "sum", "product",
+            "factor", "solve", "equation", "theorem", "lemma", "matrix", "vector",
+            "eigen", "series", "sequence", "prime", "mod", "modulo", "graph",
+            "function", "domain", "range", "log", "ln", "sin", "cos", "tan",
+            "dx", "dy", "sqrt",
+        ];
+        if (mathWords.some((w) => words.has(w))) return true;
+        return /[\d=+\-*/^<>()[\]{}\\]/.test(s);
+    }
+
+    /**
+     * Calculate the lexical overlap between two strings as the size of the intersection of their token sets divided by the size of the union of their token sets.
+     *
+     * @param {string} a
+     * @param {string} b
+     * @return {number}
+     * @memberof MessageLearner
+     */
+    lexicalOverlap(a, b){
+        const aa = new Set(this.tokenize(a));
+        const bb = new Set(this.tokenize(b));
+        if (!aa.size || !bb.size) return 0;
+        let inter = 0;
+        for (const x of aa){
+            if (bb.has(x)) inter++;
+        }
+        const union = new Set([...aa, ...bb]).size;
+        return union ? inter / union : 0;
+    }
+
+    /**
+     * Keep adjacency, but filter out obviously bad parent-child pairs.
+     *
+     * @param {string} parent
+     * @param {string} reply
+     * @param {number} dtMs
+     * @returns {boolean}
+     */
+    shouldPairAdjacent(parent, reply, dtMs){
+        const p = this.cleanText(parent);
+        const r = this.cleanText(reply);
+        if (!p || !r) return false;
+        if (p === r) return false;
+
+        const pt = this.tokenize(p);
+        const rt = this.tokenize(r);
+        if (!pt.length || !rt.length) return false;
+
+        const overlap = this.lexicalOverlap(p, r);
+        const parentQuestion = this.isQuestion(parent);
+        const parentMath = this.looksMath(parent);
+        const replyMath = this.looksMath(reply);
+
+        // very close in time and both short/chatty
+        if (dtMs <= 15000 && pt.length <= 6 && rt.length <= 10){
+            return true;
+        }
+
+        // explicit semantic relation
+        if (overlap >= 0.12){
+            return true;
+        }
+
+        // question -> answer-ish
+        if (dtMs <= 20000 && parentQuestion && rt.length <= 12){
+            return true;
+        }
+
+        // keep math adjacent pairs only when both look mathy
+        if (parentMath || replyMath){
+            return dtMs <= 30000 && parentMath && replyMath;
+        }
+
+        return false;
+    }
+
+    /**
+     * Add a parent-reply pair to the database with the given timestamp.
      *
      * @param {string} parent
      * @param {string} reply
@@ -164,7 +208,7 @@ export class MessageLearner {
     }
 
     /**
-     * Check whether a message id is already stored
+     * Check if a message with the given ID already exists in the database.
      *
      * @param {string} id
      * @return {boolean}
@@ -175,10 +219,104 @@ export class MessageLearner {
     }
 
     /**
+     * Learner
+     *
+     * @param {import("discord.js").Message & {
+     *   replyToId?: string, authorId: string
+     * }} msg
+     * @return {Promise<void>}
+     * @memberof MessageLearner
+     */
+    async learn(msg){
+        if (!msg || !msg.id) return;
+        if (this.isLatex(msg.content)) return;
+
+        const ts = msg.createdTimestamp ?? Date.now();
+        const clean = this.cleanText(msg.content);
+        if (!clean) return;
+
+        if (msg.channelId){
+            const last = this.lastMsgByChannel.get(msg.channelId);
+            if (
+                last &&
+                last.authorId === msg.authorId &&
+                !msg.replyToId &&
+                ts - last.ts < this.lookbackWindow * 1000
+            ){
+                const merged = (last.content + " " + clean).trim();
+                this.db.prepare("UPDATE messages SET content = ?, ts = ? WHERE id = ?").run(
+                    merged,
+                    ts,
+                    last.id,
+                );
+                this.lastMsgByChannel.set(msg.channelId, { ...last, content: merged, ts });
+                return;
+            }
+        }
+
+        this.db.prepare(
+            `INSERT OR REPLACE INTO messages (id, channelId, content, authorId, replyToId, ts)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+        ).run(msg.id, msg.channelId, clean, msg.authorId, msg.replyToId ?? null, ts);
+
+        let parentContent = null;
+        let parentTs = null;
+
+        if (msg.replyToId){
+            const row = this.db
+                .prepare("SELECT content, ts FROM messages WHERE id = ?")
+                .get(msg.replyToId);
+
+            // @ts-ignore
+            if (row && row.content){
+                // @ts-ignore
+                parentContent = row.content;
+                // @ts-ignore
+                parentTs = row.ts ?? null;
+            }
+        }
+        else if (msg.channelId){
+            const row = this.db
+                .prepare(
+                    `SELECT content, ts
+                     FROM messages
+                     WHERE channelId = ? AND authorId != ? AND id != ?
+                     ORDER BY ts DESC LIMIT 1`,
+                )
+                .get(msg.channelId, msg.authorId, msg.id);
+
+            // @ts-ignore
+            if (row && row.content){
+                // @ts-ignore
+                const dt = Math.max(0, ts - (row.ts ?? ts));
+                // @ts-ignore
+                if (this.shouldPairAdjacent(row.content, clean, dt)){
+                    // @ts-ignore
+                    parentContent = row.content;
+                    // @ts-ignore
+                    parentTs = row.ts ?? null;
+                }
+            }
+        }
+
+        if (parentContent){
+            this.addPair(parentContent, clean, ts);
+            if (parentTs && parentTs > ts){
+                // if parent is newer, update its timestamp to keep it in the lookback window longer
+                this.db.prepare("UPDATE messages SET ts = ? WHERE content = ?").run(ts, parentContent);
+            }
+        }
+
+        this.lastMsgByChannel.set(msg.channelId, {
+            id: msg.id,
+            content: clean,
+            authorId: msg.authorId,
+            ts,
+        });
+    }
+
+    /**
      * Learn from a message during a bulk crawl.
-     * Identical pair logic to learn(), but:
-     *  - No merge window (historical messages keep their own IDs)
-     *  - INSERT OR IGNORE instead of INSERT OR REPLACE (never overwrites)
      *
      * @param {{ id: string, content: string, channelId: string, authorId: string, replyToId: string|null, createdTimestamp: number }} msg
      * @return {{ inserted: boolean, paired: boolean }}
@@ -193,34 +331,50 @@ export class MessageLearner {
 
         if (this.has(msg.id)) return { inserted: false, paired: false };
 
-        const ts        = msg.createdTimestamp ?? Date.now();
+        const ts = msg.createdTimestamp ?? Date.now();
         const replyToId = msg.replyToId ?? null;
 
         this.db.prepare(
             `INSERT OR IGNORE INTO messages (id, channelId, content, authorId, replyToId, ts)
-            VALUES (?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?)`,
         ).run(msg.id, msg.channelId, clean, msg.authorId, replyToId, ts);
 
-        // Derive training pair
         let parentContent = null;
+
         if (replyToId){
-            const row = /** @type {any} */ (
-                this.db.prepare("SELECT content FROM messages WHERE id = ?").get(replyToId)
-            );
-            if (row?.content) parentContent = row.content;
+            const row = this.db.prepare(
+                "SELECT content FROM messages WHERE id = ?",
+            ).get(replyToId);
+
+            // @ts-ignore
+            if (row?.content){
+                // @ts-ignore
+                parentContent = row.content;
+            }
         }
         else if (msg.channelId){
-            const row = /** @type {any} */ (
-                this.db.prepare(
-                    `SELECT content FROM messages
-                    WHERE channelId = ? AND authorId != ?
-                    ORDER BY ts DESC LIMIT 1`,
-                ).get(msg.channelId, msg.authorId)
-            );
-            if (row?.content) parentContent = row.content;
+            const row = this.db.prepare(
+                `SELECT content, ts
+                 FROM messages
+                 WHERE channelId = ? AND authorId != ? AND id != ?
+                 ORDER BY ts DESC LIMIT 1`,
+            ).get(msg.channelId, msg.authorId, msg.id);
+
+            // @ts-ignore
+            if (row?.content){
+                // @ts-ignore
+                const dt = Math.max(0, ts - (row.ts ?? ts));
+                // @ts-ignore
+                if (this.shouldPairAdjacent(row.content, clean, dt)){
+                    // @ts-ignore
+                    parentContent = row.content;
+                }
+            }
         }
 
-        if (parentContent) this.addPair(parentContent, clean, ts);
+        if (parentContent){
+            this.addPair(parentContent, clean, ts);
+        }
 
         return { inserted: true, paired: !!parentContent };
     }

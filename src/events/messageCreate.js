@@ -43,27 +43,26 @@ const cleanMsg = message => message.cleanContent.replace(/<a?(:[a-zA-Z0-9_]+:)[0
  * @return {Promise<void>}
  */
 const messageCreate = async function(message){
-    if (message.author.bot || message.system) return;
+    if (message.author.bot || message.system || message.partial) return;
 
     if (!message.guild){
         await devCmd(message);
         return;
     }
 
-    if (message.partial) return;
-
-    if (config.ai_included_channels.includes(message.channelId)
+    if (
+        config.ai_included_channels.includes(message.channelId)
         || (
             message.channel.isThread()
             && message.channel.parentId
             && config.ai_included_channels.includes(message.channel.parentId)
         )
     ){
-        brain.learn({
+        await brain.learn({
             id: message.id,
             content: message.content,
-            channelId: message.channelId, // @ts-ignore
-            authorId: message.author.id,
+            channelId: message.channelId,
+            authorId: message.author.id, // @ts-ignore
             replyToId: message.reference?.messageId ?? null,
             createdTimestamp: message.createdTimestamp,
         });
@@ -75,30 +74,37 @@ const messageCreate = async function(message){
     if (message.mentions.has(message.client.user) && message.channel.id === "1285460912714678282"){
         if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
         if ("sendTyping" in message.channel) message.channel.sendTyping();
-        let query = cleanMsg(message);
+        const text = cleanMsg(message);
+        if (!text) return;
+
+        /** @type {string[]} */
+        const context = [];
 
         try {
-            const prevMessages = await message.channel.messages.fetch({ limit: 4, before: message.id });
-            if (prevMessages.size > 0){
-                const contexts = [];
-                for (const [, msg] of prevMessages){
-                    if (!msg.author.bot && contexts.length < 3){
-                        const content = cleanMsg(msg);
-                        if (content && content.length > 0) contexts.push(content);
-                    }
-                }
-                if (contexts.length > 0){
-                    query = `${contexts.reverse().join(" ")} ${query}`;
-                }
-            }
+            const prevMessages = await message.channel.messages.fetch({
+                limit: 6,
+                before: message.id,
+            });
+
+            const usable = [...prevMessages.values()]
+                .filter((msg) => !msg.author.bot)
+                .map((msg) => cleanMsg(msg))
+                .filter((content) => content && content.length > 0)
+                .slice(0, 2);
+
+            context.push(...usable);
         }
         catch (error){
             const err = error instanceof Error ? error : new Error(String(error));
-            Log.error("[AIWorker] Could not fetch previous messages for context: ", err);
+            Log.error("[AIWorker] Could not fetch previous messages for context:", err);
         }
 
         try {
-            const reply = await aiWorker.infer(query);
+            const reply = await aiWorker.infer({
+                text,
+                context,
+            });
+
             await message.reply(reply);
         }
         catch (error){
