@@ -68,10 +68,7 @@ const messageCreate = async function(message){
         });
     }
 
-    /*
-     * @TODO: Remove hardcoded channel once it goes live for everyone.
-     */
-    if (message.mentions.has(message.client.user) && message.channel.id === "1285460912714678282"){
+    if (message.mentions.has(message.client.user)){
         if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
         if ("sendTyping" in message.channel) message.channel.sendTyping();
         const text = cleanMsg(message);
