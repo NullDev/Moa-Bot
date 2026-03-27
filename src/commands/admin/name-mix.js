@@ -13,9 +13,15 @@ const inProgress = new Set();
 
 /** @type {string[][]} Each inner array is an independent pool - names only shuffle within the same pool. */
 const MIX_POOLS = [
+    // Prod
     ["1285458677758689353", "1456992404442714162", "1462444702044520623"], // Staff
     ["1462527609278693683"], // Bots
     ["1426635851110023268", "1426635731463569460"], // Members
+/*
+    // Dev
+    ["1110484391467163648", "717468147044581386", "1107607137175224371"],
+    ["1107607247191814244"],
+*/
 ];
 
 /**
@@ -40,7 +46,11 @@ export default {
         .setName(commandName)
         .setDescription("(ADMIN) Save and shuffle nicknames of members with the target roles.")
         .setContexts([InteractionContextType.Guild])
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .addBooleanOption(option =>
+            option.setName("dry-run")
+                .setDescription("Preview who would be renamed to whom without actually doing it")
+                .setRequired(false)),
 
     /**
      * @param {import("discord.js").ChatInputCommandInteraction} interaction
@@ -50,8 +60,10 @@ export default {
         const { guild } = interaction;
         const backupKey = `guild-${guildId}.name-mix-backup`;
 
-        // Debounce: reject before deferring so we can still send a fresh reply
-        if (inProgress.has(guildId)){
+        const dryRun = interaction.options.getBoolean("dry-run") ?? false;
+
+        // Debounce: reject before deferring so we can still send a fresh reply (real runs only)
+        if (!dryRun && inProgress.has(guildId)){
             return await interaction.reply({
                 content: "A name mix is already in progress! Please wait for it to finish.",
                 flags: [MessageFlags.Ephemeral],
@@ -59,15 +71,18 @@ export default {
         }
 
         await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-        inProgress.add(guildId);
+
+        if (!dryRun) inProgress.add(guildId);
 
         try {
-            // Prevent re-running if a previous mix was never unmixed
-            const existing = await integralDb.get(backupKey);
-            if (existing){
-                return await interaction.editReply({
-                    content: "A name mix is already active! Use `/name-unmix` to restore first.",
-                });
+            if (!dryRun){
+                // Prevent re-running if a previous mix was never unmixed
+                const existing = await integralDb.get(backupKey);
+                if (existing){
+                    return await interaction.editReply({
+                        content: "A name mix is already active! Use `/name-unmix` to restore first.",
+                    });
+                }
             }
 
             // Populate member cache via REST (avoids gateway opcode 8 rate limit)
@@ -78,25 +93,30 @@ export default {
                 afterId = /** @type {string} */ ([...batch.keys()].at(-1));
             }
 
-            // Build the full backup first across all pools, then persist it before
-            // touching any nicknames - so a mid-run crash never leaves members renamed
-            // without a record of their originals.
-            /** @type {Record<string, string|null>} */
-            const backup = {};
-            for (const roleIds of MIX_POOLS){
-                for (const roleId of roleIds){
-                    const role = guild?.roles.cache.get(roleId);
-                    if (!role) continue;
-                    for (const [id, member] of role.members){
-                        if (!(id in backup)) backup[id] = member.nickname;
+            if (!dryRun){
+                // Build the full backup first across all pools, then persist it before
+                // touching any nicknames - so a mid-run crash never leaves members renamed
+                // without a record of their originals.
+                /** @type {Record<string, string|null>} */
+                const backup = {};
+                for (const roleIds of MIX_POOLS){
+                    for (const roleId of roleIds){
+                        const role = guild?.roles.cache.get(roleId);
+                        if (!role) continue;
+                        for (const [id, member] of role.members){
+                            if (!(id in backup)) backup[id] = member.nickname;
+                        }
                     }
                 }
+                await integralDb.set(backupKey, backup);
             }
-            await integralDb.set(backupKey, backup);
 
             let succeeded = 0;
             let failed    = 0;
             let tooSmall  = 0;
+
+            /** @type {string[]} */
+            const dryRunLines = [];
 
             for (const roleIds of MIX_POOLS){
                 // Collect members in this pool (deduplicated by id)
@@ -121,16 +141,35 @@ export default {
                 const names = members.map(m => m.displayName);
                 const mixed = sattolo(names);
 
-                const results = await Promise.allSettled(
-                    members.map((member, i) => member.setNickname(mixed[i], "April Fools name mix")),
-                );
-                for (const result of results){
-                    if (result.status === "fulfilled") succeeded++;
-                    else {
-                        failed++;
-                        Log.warn(`name-mix: could not rename a member: ${result.reason}`);
+                if (dryRun){
+                    dryRunLines.push(`**Pool** (${members.length} members):`);
+                    for (let i = 0; i < members.length; i++){
+                        dryRunLines.push(`  \`${names[i]}\` → \`${mixed[i]}\``);
                     }
                 }
+                else {
+                    const results = await Promise.allSettled(
+                        members.map((member, i) => member.setNickname(mixed[i], "April Fools name mix")),
+                    );
+                    for (const result of results){
+                        if (result.status === "fulfilled") succeeded++;
+                        else {
+                            failed++;
+                            Log.warn(`name-mix: could not rename a member: ${result.reason}`);
+                        }
+                    }
+                }
+            }
+
+            if (dryRun){
+                const preview = dryRunLines.join("\n");
+                // Discord messages cap at 2000 chars — truncate gracefully if the server is huge
+                const truncated = preview.length > 1800
+                    ? preview.slice(0, 1800) + "\n… (truncated)"
+                    : preview;
+                return await interaction.editReply({
+                    content: `**Dry run — no changes made:**\n${truncated}`,
+                });
             }
 
             Log.info(`name-mix: ${succeeded} nicknames shuffled, ${failed} failed, ${tooSmall} pool(s) skipped - by ${interaction.user.tag}`);
@@ -147,7 +186,7 @@ export default {
             });
         }
         finally {
-            inProgress.delete(guildId);
+            if (!dryRun) inProgress.delete(guildId);
         }
     },
 };
