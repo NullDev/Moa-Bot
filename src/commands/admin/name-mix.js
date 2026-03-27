@@ -25,6 +25,13 @@ const MIX_POOLS = [
 */
 ];
 
+const ActiveUsers = [
+    // Prod
+    "797872032469352528", "862412452750950454", "1404724396987519088", "1409903360978714774",
+    // Dev
+    // "545621952849510400", "1439758448131833876", "368521195940741122",
+];
+
 /**
  * Sattolo cycle - guaranteed derangement (no element stays in its original position).
  * Differs from Fisher-Yates only in that j is drawn from [0, i) instead of [0, i].
@@ -109,6 +116,12 @@ export default {
                         }
                     }
                 }
+                for (const userId of ActiveUsers){
+                    if (!(userId in backup)){
+                        const member = guild?.members.cache.get(userId);
+                        if (member) backup[userId] = member.nickname;
+                    }
+                }
                 await integralDb.set(backupKey, backup);
             }
 
@@ -166,6 +179,41 @@ export default {
                         }
                     }
                 }
+            }
+
+            // ActiveUsers pool — resolved by user ID, processed last
+            const activeMembers = ActiveUsers
+                .map(id => guild?.members.cache.get(id))
+                .filter(/** @returns {m is import("discord.js").GuildMember} */ m => !!m && m.manageable && !assigned.has(m.id));
+
+            if (activeMembers.length >= 2){
+                const names = activeMembers.map(m => m.displayName);
+                const mixed = sattolo(names);
+
+                for (const m of activeMembers) assigned.add(m.id);
+
+                if (dryRun){
+                    dryRunLines.push(`**Active Users pool** (${activeMembers.length} members):`);
+                    for (let i = 0; i < activeMembers.length; i++){
+                        dryRunLines.push(`  \`${names[i]}\` → \`${mixed[i]}\``);
+                    }
+                }
+                else {
+                    const results = await Promise.allSettled(
+                        activeMembers.map((member, i) => member.setNickname(mixed[i] ?? null, "April Fools name mix")),
+                    );
+                    for (const result of results){
+                        if (result.status === "fulfilled") succeeded++;
+                        else {
+                            failed++;
+                            Log.warn(`name-mix: could not rename active user: ${result.reason}`);
+                        }
+                    }
+                }
+            }
+            else if (activeMembers.length > 0){
+                tooSmall++;
+                Log.warn(`name-mix: ActiveUsers pool has only ${activeMembers.length} unassigned manageable member(s), skipping.`);
             }
 
             if (dryRun){
