@@ -1,0 +1,153 @@
+import { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits, MessageFlags } from "discord.js";
+import integralDb from "../../util/integralDb.js";
+import Log from "../../util/log.js";
+
+// ========================= //
+// = Copyright (c) NullDev = //
+// ========================= //
+
+const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
+
+/** Guild IDs where a mix is currently in progress (in-process debounce). */
+const inProgress = new Set();
+
+/** @type {string[][]} Each inner array is an independent pool - names only shuffle within the same pool. */
+const MIX_POOLS = [
+    ["1285458677758689353", "1456992404442714162", "1462444702044520623"], // Staff
+    ["1462527609278693683"], // Bots
+    ["1426635851110023268", "1426635731463569460"], // Members
+];
+
+/**
+ * Sattolo cycle - guaranteed derangement (no element stays in its original position).
+ * Differs from Fisher-Yates only in that j is drawn from [0, i) instead of [0, i].
+ *
+ * @template T
+ * @param {T[]} arr
+ * @returns {T[]}
+ */
+function sattolo(arr){
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * i); // [0, i-1]
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+export default {
+    data: new SlashCommandBuilder()
+        .setName(commandName)
+        .setDescription("(ADMIN) Save and shuffle nicknames of members with the target roles.")
+        .setContexts([InteractionContextType.Guild])
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+    /**
+     * @param {import("discord.js").ChatInputCommandInteraction} interaction
+     */
+    async execute(interaction){
+        const guildId   = interaction.guildId ?? "";
+        const { guild } = interaction;
+        const backupKey = `guild-${guildId}.name-mix-backup`;
+
+        // Debounce: reject before deferring so we can still send a fresh reply
+        if (inProgress.has(guildId)){
+            return await interaction.reply({
+                content: "A name mix is already in progress! Please wait for it to finish.",
+                flags: [MessageFlags.Ephemeral],
+            });
+        }
+
+        await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+        inProgress.add(guildId);
+
+        try {
+            // Prevent re-running if a previous mix was never unmixed
+            const existing = await integralDb.get(backupKey);
+            if (existing){
+                return await interaction.editReply({
+                    content: "A name mix is already active! Use `/name-unmix` to restore first.",
+                });
+            }
+
+            // Populate member cache via REST (avoids gateway opcode 8 rate limit)
+            let afterId = undefined;
+            while (true){
+                const batch = await guild?.members.fetch({ limit: 1000, ...(afterId ? { after: afterId } : {}) });
+                if (!batch?.size || batch.size < 1000) break;
+                afterId = /** @type {string} */ ([...batch.keys()].at(-1));
+            }
+
+            // Build the full backup first across all pools, then persist it before
+            // touching any nicknames - so a mid-run crash never leaves members renamed
+            // without a record of their originals.
+            /** @type {Record<string, string|null>} */
+            const backup = {};
+            for (const roleIds of MIX_POOLS){
+                for (const roleId of roleIds){
+                    const role = guild?.roles.cache.get(roleId);
+                    if (!role) continue;
+                    for (const [id, member] of role.members){
+                        if (!(id in backup)) backup[id] = member.nickname;
+                    }
+                }
+            }
+            await integralDb.set(backupKey, backup);
+
+            let succeeded = 0;
+            let failed    = 0;
+            let tooSmall  = 0;
+
+            for (const roleIds of MIX_POOLS){
+                // Collect members in this pool (deduplicated by id)
+                /** @type {Map<string, import("discord.js").GuildMember>} */
+                const memberMap = new Map();
+                for (const roleId of roleIds){
+                    const role = guild?.roles.cache.get(roleId);
+                    if (!role) continue;
+                    for (const [id, member] of role.members){
+                        if (!memberMap.has(id)) memberMap.set(id, member);
+                    }
+                }
+
+                const members = [...memberMap.values()].filter(m => m.manageable);
+
+                if (members.length < 2){
+                    tooSmall++;
+                    Log.warn(`name-mix: pool [${roleIds.join(", ")}] has only ${members.length} manageable member(s), skipping.`);
+                    continue;
+                }
+
+                const names = members.map(m => m.displayName);
+                const mixed = sattolo(names);
+
+                const results = await Promise.allSettled(
+                    members.map((member, i) => member.setNickname(mixed[i], "April Fools name mix")),
+                );
+                for (const result of results){
+                    if (result.status === "fulfilled") succeeded++;
+                    else {
+                        failed++;
+                        Log.warn(`name-mix: could not rename a member: ${result.reason}`);
+                    }
+                }
+            }
+
+            Log.info(`name-mix: ${succeeded} nicknames shuffled, ${failed} failed, ${tooSmall} pool(s) skipped - by ${interaction.user.tag}`);
+
+            return await interaction.editReply({
+                content: [
+                    "**Name mix complete!**",
+                    `- **${succeeded}** nicknames shuffled across ${MIX_POOLS.length} pool(s)`,
+                    ...(failed   ? [`- **${failed}** skipped (insufficient permissions)`]        : []),
+                    ...(tooSmall ? [`- **${tooSmall}** pool(s) skipped (fewer than 2 members)`] : []),
+                    "",
+                    "Use `/name-unmix` to restore originals.",
+                ].join("\n"),
+            });
+        }
+        finally {
+            inProgress.delete(guildId);
+        }
+    },
+};
