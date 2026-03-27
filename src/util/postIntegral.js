@@ -48,9 +48,10 @@ const formatDate = function(date){
  * @param {string} difficulty
  * @param {import("discord.js").User} proposedBy
  * @param {Date} [postDate]
+ * @param {boolean} [evil] - Whether this is an evil integral (for April Fools)
  * @returns {Promise<{ integralMessage: import("discord.js").Message, thread: import("discord.js").AnyThreadChannel }>}
  */
-const postIntegral = async function(client, guildId, image, difficulty, proposedBy, postDate = new Date()){
+const postIntegral = async function(client, guildId, image, difficulty, proposedBy, postDate = new Date(), evil = false){
     const channelId = config.ids.daily_int_channel;
     const roleId = config.ids.daily_int_role;
 
@@ -60,15 +61,16 @@ const postIntegral = async function(client, guildId, image, difficulty, proposed
     if (!channel?.isTextBased() || !("send" in channel)) throw new Error("Could not find the daily integral channel!");
 
     const dateStr = formatDate(postDate);
-    const messageContent = `# ${dateStr} Integral (${difficulty})\nProposed by: ${proposedBy}`;
-
+    const messageContent = evil
+        ? `# ${dateStr} Integral (ℂ̶̖͈̱͝𝕌̴͜ℝ̴̵̷̧̞͠𝕊̶̴̮͇̩̗𝔼̴̶̙͞𝔻̸̴͇̱̯̠̠̕͝)\nSummoned by: ���⣿ʖꖎℸ`
+        : `# ${dateStr} Integral (${difficulty})\nProposed by: ${proposedBy}`;
     const integralMessage = await channel.send({
         content: messageContent,
         files: [image],
     });
 
     const thread = await integralMessage.startThread({
-        name: `${dateStr} - ${difficulty}`,
+        name: evil ? `${dateStr} - ℂ̶̖͈̱͝𝕌̴͜ℝ̴̵̷̧̞͠𝕊̶̴̮͇̩̗𝔼̴̶̙͞𝔻̸̴͇̱̯̠̠̕͝` : `${dateStr} - ${difficulty}`,
         autoArchiveDuration: 1440,
     });
 
@@ -81,6 +83,7 @@ const postIntegral = async function(client, guildId, image, difficulty, proposed
     await integralDb.set(`${integralKey}.imageUrl`, image.url);
     await integralDb.set(`${integralKey}.solvers`, []);
     await integralDb.set(`${integralKey}.proposedBy`, proposedBy.id);
+    await integralDb.set(`${integralKey}.evil`, "1");
 
     return { integralMessage, thread };
 };
