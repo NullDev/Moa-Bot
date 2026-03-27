@@ -14,9 +14,10 @@ const inProgress = new Set();
 /** @type {string[][]} Each inner array is an independent pool - names only shuffle within the same pool. */
 const MIX_POOLS = [
     // Prod
-    ["1285458677758689353", "1456992404442714162", "1462444702044520623"], // Staff
-    ["1462527609278693683"], // Bots
-    ["1426635851110023268", "1426635731463569460"], // Members
+    ["1285458677758689353", "1456992404442714162", "1462444702044520623"], // Staff: "Staff", "Bot developer", "chat mod"
+    ["1462527609278693683"],                                               // Bots: "Bot"
+    ["1426635851110023268", "1426635731463569460"],                        // Members: "Underqualified Student", "Unqualified Student"
+    ["1456987376827109519", "1433774186240806982", "1275100223248666754"], // Special: "Daily Integral", "Embed", "Founding members"
 /*
     // Dev
     ["1110484391467163648", "717468147044581386", "1107607137175224371"],
@@ -118,15 +119,18 @@ export default {
             /** @type {string[]} */
             const dryRunLines = [];
 
+            // Members assigned in an earlier pool are locked in and skipped by later pools
+            const assigned = new Set();
+
             for (const roleIds of MIX_POOLS){
-                // Collect members in this pool (deduplicated by id)
+                // Collect members in this pool (deduplicated by id, excluding already-assigned)
                 /** @type {Map<string, import("discord.js").GuildMember>} */
                 const memberMap = new Map();
                 for (const roleId of roleIds){
                     const role = guild?.roles.cache.get(roleId);
                     if (!role) continue;
                     for (const [id, member] of role.members){
-                        if (!memberMap.has(id)) memberMap.set(id, member);
+                        if (!memberMap.has(id) && !assigned.has(id)) memberMap.set(id, member);
                     }
                 }
 
@@ -140,6 +144,9 @@ export default {
 
                 const names = members.map(m => m.displayName);
                 const mixed = sattolo(names);
+
+                // Lock these members in before processing the next pool
+                for (const member of members) assigned.add(member.id);
 
                 if (dryRun){
                     dryRunLines.push(`**Pool** (${members.length} members):`);
