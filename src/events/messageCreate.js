@@ -107,7 +107,7 @@ const messageCreate = async function(message){
         catch (error){
             const err = error instanceof Error ? error : new Error(String(error));
             Log.error("[AIWorker] Inference error:", err);
-            await message.reply("It seems like Shadow messed up again. Something broke lmao :skull:");
+            await message.reply("It seems like Shadow messed up again. Something broke lmao... :skull:");
         }
 
         return;
