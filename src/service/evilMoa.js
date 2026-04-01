@@ -54,8 +54,6 @@ const askGpt = async function(message, author, channel, context, reply = {}){
     const prompt = await preparePrompt(author, channel, context);
     const msg = [];
 
-    console.log(author);
-
     msg.push({
         content: prompt,
         role: "system",
@@ -142,6 +140,17 @@ const evilMoa = async function(message){
         );
 
         if (typeof res === "string"){
+            if (res.endsWith("### TIMEOUT_USER")){
+                if (message.member?.moderatable){
+                    await message.member.timeout(2 * 60 * 1000, "Provoked Moa");
+                }
+
+                await message.reply(res.replace("### TIMEOUT_USER", "").trim());
+                await /** @type {import("discord.js").GuildTextBasedChannel} */(message.channel)
+                    ?.send(`User ${message.author} has been timed out for 2 minutes. Don't mess with me.`);
+                return;
+            }
+
             await message.reply(res);
         }
     }
