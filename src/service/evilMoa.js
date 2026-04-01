@@ -7,8 +7,6 @@ const openai = new OpenAI({
 });
 
 /**
- * Get the bot name for mentions, try the nickname of the bot in the guild first, then display name
- *
  * @param {import("discord.js").Message} message
  */
 const getBotName = message => {
@@ -20,8 +18,6 @@ const getBotName = message => {
 };
 
 /**
- * Clean message content by removing mentions and trimming whitespace
- *
  * @param {import("discord.js").Message} message
  */
 const cleanMsg = message => message.cleanContent.replace(/<a?(:[a-zA-Z0-9_]+:)[0-9]+>/g, "$1")
@@ -30,8 +26,6 @@ const cleanMsg = message => message.cleanContent.replace(/<a?(:[a-zA-Z0-9_]+:)[0
     .trim();
 
 /**
- * Prepare the prompt for usage
- *
  * @param {String} author
  * @param {String} channel
  * @param {String} context
@@ -49,8 +43,6 @@ const preparePrompt = async function(author, channel, context){
 };
 
 /**
- * Ask Chat-GPT
- *
  * @param {String} message
  * @param {String} author
  * @param {String} channel
