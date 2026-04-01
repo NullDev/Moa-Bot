@@ -2,7 +2,7 @@ import devCmd from "../service/devCmd.js";
 import { MessageLearner } from "../ai/MsgLearn.js";
 import { PythonAIWorker } from "../ai/getAiReply.js";
 import { config } from "../../config/config.js";
-import evilMoa from "../service/evilMoa.js";
+// import evilMoa from "../service/evilMoa.js";
 // import Log from "../util/log.js";
 
 // ========================= //
@@ -47,9 +47,9 @@ const messageCreate = async function(message){
     }
 
     if (message.mentions.has(message.client.user)){
-        if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
-        if ("sendTyping" in message.channel) message.channel.sendTyping();
-        await evilMoa(message);
+        // if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
+        // if ("sendTyping" in message.channel) message.channel.sendTyping();
+        // await evilMoa(message);
         /*
         const text = cleanMsg(message);
         if (!text) return;
