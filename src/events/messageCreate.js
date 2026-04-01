@@ -2,7 +2,8 @@ import devCmd from "../service/devCmd.js";
 import { MessageLearner } from "../ai/MsgLearn.js";
 import { PythonAIWorker } from "../ai/getAiReply.js";
 import { config } from "../../config/config.js";
-import Log from "../util/log.js";
+import evilMoa from "../service/evilMoa.js";
+// import Log from "../util/log.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -12,29 +13,6 @@ export const aiWorker = new PythonAIWorker();
 
 const brain = new MessageLearner();
 await brain.init();
-
-/**
- * Get the bot name for mentions, try the nickname of the bot in the guild first, then display name
- *
- * @param {import("discord.js").Message} message
- */
-const getBotName = message => {
-    if (message.guild){
-        const member = message.guild.members.cache.get(message.client.user.id);
-        return member?.nickname || message.client.user.displayName;
-    }
-    return message.client.user.displayName;
-};
-
-/**
- * Clean message content by removing mentions and trimming whitespace
- *
- * @param {import("discord.js").Message} message
- */
-const cleanMsg = message => message.cleanContent.replace(/<a?(:[a-zA-Z0-9_]+:)[0-9]+>/g, "$1")
-    .replace(`<@${message.client.user.id}>`, "")
-    .replace(`@${getBotName(message)} `, "")
-    .trim();
 
 /**
  * Handle messageCreate event
@@ -71,10 +49,11 @@ const messageCreate = async function(message){
     if (message.mentions.has(message.client.user)){
         if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
         if ("sendTyping" in message.channel) message.channel.sendTyping();
+        await evilMoa(message);
+        /*
         const text = cleanMsg(message);
         if (!text) return;
 
-        /** @type {string[]} */
         const context = [];
 
         try {
@@ -109,6 +88,7 @@ const messageCreate = async function(message){
             Log.error("[AIWorker] Inference error:", err);
             await message.reply("It seems like Shadow messed up again. Something broke lmao :skull:");
         }
+        */
 
         return;
     }

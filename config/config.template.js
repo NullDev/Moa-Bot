@@ -18,4 +18,6 @@ export default {
     ai_included_channels: [
         "",
     ],
+    openai_token: "",
+    openai_prompt: "",
 };

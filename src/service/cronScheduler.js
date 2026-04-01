@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import Log from "../util/log.js";
 import LogHandler from "../crons/removeOldLogs.js";
-import getRandomMathFact from "../util/mathFact.js";
+// import getRandomMathFact from "../util/mathFact.js";
 import { config } from "../../config/config.js";
 
 // ========================= //
@@ -30,11 +30,14 @@ const scheduleCrons = async function(client){
             return;
         }
 
+        /*
         const mathFact = await getRandomMathFact(true);
         const formattedFact = mathFact.charAt(0).toLowerCase() + mathFact.slice(1);
         const finalFact = formattedFact.endsWith(".") ? formattedFact.slice(0, -1) : formattedFact;
 
         await mainChannel.send("Did you know that " + finalFact + "? :point_up::nerd:").catch();
+        */
+        await mainChannel.send("Did you know that I'm taking over this server now? :point_up::nerd:").catch();
     });
 
     const cronCount = cron.getTasks().size;
