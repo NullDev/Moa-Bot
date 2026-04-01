@@ -54,6 +54,8 @@ const askGpt = async function(message, author, channel, context, reply = {}){
     const prompt = await preparePrompt(author, channel, context);
     const msg = [];
 
+    console.log(author);
+
     msg.push({
         content: prompt,
         role: "system",
@@ -105,7 +107,7 @@ const evilMoa = async function(message){
                 if (contexts.length < 3){
                     const content = cleanMsg(msg);
                     if (content && content.length > 0){
-                        contexts.push({ user: msg.author.displayName || msg.author.username, content });
+                        contexts.push({ user: msg.author.username, content });
                     }
                 }
             }
@@ -127,13 +129,13 @@ const evilMoa = async function(message){
             const refMsg = await message.channel.messages.fetch(message.reference.messageId || "");
 
             reply.message = refMsg.cleanContent;
-            reply.author = refMsg.author.displayName || refMsg.author.username;
+            reply.author = refMsg.author.username;
             reply.isMe = refMsg.author.id === message.client.user?.id;
         }
 
         const res = await askGpt(
             query,
-            message.author.displayName || message.author.username,
+            message.author.username,
             /** @type {import("discord.js").TextChannel} */(message.channel).name,
             context || "N/A",
             reply,
