@@ -53,6 +53,7 @@ export class MessageLearner {
         return (
             s.startsWith(",tex")
             || s.startsWith(",texsp")
+            || s.startsWith(",tikz")
             || s.includes("tikzpicture")
             || /\$(?:\\.|[^$\\])+\$/.test(s)
             || /\\\[(?:\\.|[^\\])+\\\]/.test(s)
