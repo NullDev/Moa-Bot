@@ -53,13 +53,13 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | discord: <br> `wolfram_appid` | OPTIONAL: Wolfram Alpha App ID | String | N/A |
 | discord: <br> `total_shards` | Number of shards to use or "auto" for automatic sharding | number \| "auto" | 1 |
 | ids: <br> `guild_id` | ID of the main server where special features are enabled | string | N/A |
-| ids: <br> `daily_int_channel` | ID of the daily integral channel | string | N/A |
-| ids: <br> `int_proposal_channel` | ID of the integral proposal channel | string | N/A |
+| ids: <br> `daily_int_channel` | ID of the daily Math Challenge channel | string | N/A |
+| ids: <br> `int_proposal_channel` | ID of the Math Challenge proposal channel | string | N/A |
 | ids: <br> `meme_channel` | ID of the meme channel | string | N/A |
 | ids: <br> `general_channel` | ID of the general channel | string | N/A |
-| ids: <br> `daily_int_role` | ID of the daily integral role | string | N/A |
+| ids: <br> `daily_int_role` | ID of the daily Math Challenge role | string | N/A |
 | ids: <br> `moabot` | ID of the Moa Bot user | string | N/A |
-| emkc | EMKC API Key for fetching integrals | string | N/A |
+| emkc | EMKC API Key for running code | string | N/A |
 | ai_included_channels | Array of channel IDs that the AI should learn from | string-array | [] |
 
 <hr>
