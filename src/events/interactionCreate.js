@@ -3,7 +3,7 @@ import { QuickDB } from "quick.db";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, PermissionFlagsBits, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import executeCode from "../service/codeExecution.js";
 import executeSage from "../service/sageExecution.js";
-import { postIntegral } from "../util/postIntegral.js";
+import { postMathChallenge } from "../util/postMathChallenge.js";
 import challengesDb from "../util/challengesDb.js";
 import { config } from "../../config/config.js";
 import Log from "../util/log.js";
@@ -97,7 +97,7 @@ const handlePostProposal = async function(interaction){
 
     try {
         const proposer = await interaction.client.users.fetch(proposalData.proposerId);
-        const { integralMessage } = await postIntegral(
+        const { challengeMessage } = await postMathChallenge(
             interaction.client,
             guildId,
             image,
@@ -112,10 +112,10 @@ const handlePostProposal = async function(interaction){
             components: [/** @type {any} */ (buildDisabledRow())],
         });
 
-        Log.info(`Proposal ${msgId} posted as Math Challenge ${integralMessage.id} by ${interaction.user.tag}`);
+        Log.info(`Proposal ${msgId} posted as Math Challenge ${challengeMessage.id} by ${interaction.user.tag}`);
 
         return await interaction.followUp({
-            content: `✅ Posted! [Jump to Math Challenge](${integralMessage.url})`,
+            content: `✅ Posted! [Jump to Math Challenge](${challengeMessage.url})`,
             flags: [MessageFlags.Ephemeral],
         });
     }
@@ -271,7 +271,7 @@ const handleRejectProposal = async function(interaction){
     }
 
     if (proposalData.posted){
-        return await interaction.followUp({ content: "This integral has already been posted and cannot be rejected.", flags: [MessageFlags.Ephemeral] });
+        return await interaction.followUp({ content: "This Math Challenge has already been posted and cannot be rejected.", flags: [MessageFlags.Ephemeral] });
     }
 
     await challengesDb.set(`${proposalKey}.posted`, true);

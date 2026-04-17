@@ -12,7 +12,7 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("(ADMIN) Post a role-select message for the Daily Integral role.")
+        .setDescription("(ADMIN) Post a role-select message for the Daily Math Challenge role.")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
     /**
