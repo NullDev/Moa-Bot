@@ -6,20 +6,20 @@ import { config } from "../config/config.js";
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const integralDb = new QuickDB({
+const challengesDb = new QuickDB({
     filePath: path.resolve("./data/guild_data.sqlite"),
 });
 
 const GUILD_ID = config.ids.guild_id;
 
 /**
- * List all integral entries in the database
+ * List all Math Challenge entries in the database
  */
-const listIntegrals = async function(){
-    console.log("Listing all integral entries in the database...\n");
+const listChallenges = async function(){
+    console.log("Listing all Math Challenge entries in the database...\n");
 
     try {
-        const guildData = await integralDb.get(`guild-${GUILD_ID}`);
+        const guildData = await challengesDb.get(`guild-${GUILD_ID}`);
 
         if (!guildData || typeof guildData !== "object"){
             console.log("No guild data found.");
@@ -65,7 +65,7 @@ const listIntegrals = async function(){
         console.log("  node scripts/cleanup-orphans.js delete <messageId>");
     }
     catch (error){
-        console.error("Error listing integrals:", error);
+        console.error("Error listing Math Challenges:", error);
     }
 };
 
@@ -74,15 +74,15 @@ const listIntegrals = async function(){
  *
  * @param {string} messageId
  */
-const deleteIntegral = async function(messageId){
-    console.log(`Deleting integral entry for message ID: ${messageId}\n`);
+const deleteChallenge = async function(messageId){
+    console.log(`Deleting Math Challenge entry for message ID: ${messageId}\n`);
 
     try {
         const integralKey = `guild-${GUILD_ID}.integral-${messageId}`;
-        const integralData = await integralDb.get(integralKey);
+        const integralData = await challengesDb.get(integralKey);
 
         if (!integralData){
-            console.log("No integral entry found with that message ID.");
+            console.log("No Math Challenge entry found with that message ID.");
             return;
         }
 
@@ -91,32 +91,32 @@ const deleteIntegral = async function(messageId){
 
         for (const odSolverId of solvers){
             const userKey = `guild-${GUILD_ID}.user-${odSolverId}`;
-            const userSolutions = await integralDb.get(`${userKey}.solutions`) || [];
+            const userSolutions = await challengesDb.get(`${userKey}.solutions`) || [];
 
             const updatedSolutions = userSolutions.filter(
                 (/** @type {{ messageId: string; }} */ sol) => sol.messageId !== messageId,
             );
 
             if (updatedSolutions.length > 0){
-                await integralDb.set(`${userKey}.solutions`, updatedSolutions);
+                await challengesDb.set(`${userKey}.solutions`, updatedSolutions);
             }
             else {
-                await integralDb.delete(`${userKey}.solutions`);
+                await challengesDb.delete(`${userKey}.solutions`);
             }
             cleanedSolvers++;
         }
 
-        await integralDb.delete(integralKey);
+        await challengesDb.delete(integralKey);
 
-        console.log("✅ Successfully deleted integral entry!");
+        console.log("✅ Successfully deleted Math Challenge entry!");
         console.log(`  - Cleaned up ${cleanedSolvers} solver entries`);
     }
     catch (error){
-        console.error("Error deleting integral:", error);
+        console.error("Error deleting Math Challenge:", error);
     }
 };
 
 const args = process.argv.slice(2);
 
-if (args[0] === "delete" && args[1]) deleteIntegral(args[1]);
-else listIntegrals();
+if (args[0] === "delete" && args[1]) deleteChallenge(args[1]);
+else listChallenges();

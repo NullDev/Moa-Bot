@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits, MessageFlags } from "discord.js";
-import integralDb from "../../util/integralDb.js";
+import challengesDb from "../../util/challengesDb.js";
 import Log from "../../util/log.js";
 
 // ========================= //
@@ -86,7 +86,7 @@ export default {
             }
 
             const integralKey = `guild-${guildId}.integral-${messageId}`;
-            const integralData = await integralDb.get(integralKey);
+            const integralData = await challengesDb.get(integralKey);
 
             if (!integralData){
                 return await interaction.editReply({
@@ -94,7 +94,7 @@ export default {
                 });
             }
 
-            const solvers = await integralDb.get(`${integralKey}.solvers`) || [];
+            const solvers = await challengesDb.get(`${integralKey}.solvers`) || [];
 
             if (!solvers.includes(user.id)){
                 return await interaction.editReply({
@@ -103,15 +103,15 @@ export default {
             }
 
             const updatedSolvers = solvers.filter((/** @type {string} */ id) => id !== user.id);
-            await integralDb.set(`${integralKey}.solvers`, updatedSolvers);
+            await challengesDb.set(`${integralKey}.solvers`, updatedSolvers);
 
             const userKey = `guild-${guildId}.user-${user.id}`;
-            const userSolutions = await integralDb.get(`${userKey}.solutions`) || [];
+            const userSolutions = await challengesDb.get(`${userKey}.solutions`) || [];
 
             const updatedSolutions = userSolutions.filter(
                 (/** @type {{ messageId: string }} */ sol) => sol.messageId !== messageId,
             );
-            await integralDb.set(`${userKey}.solutions`, updatedSolutions);
+            await challengesDb.set(`${userKey}.solutions`, updatedSolutions);
 
             const currentContent = message.content ?? "";
 

@@ -5,8 +5,8 @@ import { QuickDB } from "quick.db";
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const integralDb = new QuickDB({
+const challengesDb = new QuickDB({
     filePath: path.resolve("./data/guild_data.sqlite"),
 });
 
-export default integralDb;
+export default challengesDb;

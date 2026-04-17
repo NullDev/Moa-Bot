@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, InteractionContextType } from "discord.js";
 import texRender from "../../util/texRender.js";
-import integralDb from "../../util/integralDb.js";
+import challengesDb from "../../util/challengesDb.js";
 import Log from "../../util/log.js";
 
 // ========================= //
@@ -63,7 +63,7 @@ export default {
             Log.error("Error adding reaction: ", err);
         }
 
-        await integralDb.set(`guild-${interaction.guildId}.tex-${message.id}`, interaction.user.id);
+        await challengesDb.set(`guild-${interaction.guildId}.tex-${message.id}`, interaction.user.id);
 
         return message;
     },

@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, InteractionContextType, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { config } from "../../../config/config.js";
-import integralDb from "../../util/integralDb.js";
+import challengesDb from "../../util/challengesDb.js";
 import Log from "../../util/log.js";
 
 // ========================= //
@@ -31,7 +31,7 @@ export default {
                 .setRequired(true))
         .addStringOption(option =>
             option.setName("difficulty")
-                .setDescription("Difficulty level of the integral")
+                .setDescription("Difficulty level of the Math Challenge")
                 .setRequired(true)
                 .addChoices(
                     { name: "Easy", value: "Easy" },
@@ -68,7 +68,7 @@ export default {
 
             const postButton = new ButtonBuilder()
                 .setCustomId("post_proposal")
-                .setLabel("Post Integral")
+                .setLabel("Post Math Challenge")
                 .setStyle(ButtonStyle.Success);
 
             const changeDifficultyButton = new ButtonBuilder()
@@ -90,9 +90,9 @@ export default {
             });
 
             const proposalKey = `guild-${interaction.guildId}.proposal-${proposalMessage.id}`;
-            await integralDb.set(`${proposalKey}.proposerId`, interaction.user.id);
-            await integralDb.set(`${proposalKey}.difficulty`, difficulty);
-            await integralDb.set(`${proposalKey}.posted`, false);
+            await challengesDb.set(`${proposalKey}.proposerId`, interaction.user.id);
+            await challengesDb.set(`${proposalKey}.difficulty`, difficulty);
+            await challengesDb.set(`${proposalKey}.posted`, false);
 
             Log.info(`Math Challenge proposal submitted by ${interaction.user.tag}: message ${proposalMessage.id}`);
 

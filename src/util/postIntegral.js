@@ -1,5 +1,5 @@
 import { config } from "../../config/config.js";
-import integralDb from "./integralDb.js";
+import challengesDb from "./challengesDb.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -40,7 +40,7 @@ const formatDate = function(date){
 };
 
 /**
- * Post an integral challenge to the daily channel
+ * Post a Math Challenge challenge to the daily channel
  *
  * @param {import("discord.js").Client} client
  * @param {string} guildId
@@ -75,12 +75,12 @@ const postIntegral = async function(client, guildId, image, difficulty, proposed
     await thread.send({ content: `<@&${roleId}>` });
 
     const integralKey = `guild-${guildId}.integral-${integralMessage.id}`;
-    await integralDb.set(`${integralKey}.date`, postDate.toISOString());
-    await integralDb.set(`${integralKey}.difficulty`, difficulty);
-    await integralDb.set(`${integralKey}.threadId`, thread.id);
-    await integralDb.set(`${integralKey}.imageUrl`, image.url);
-    await integralDb.set(`${integralKey}.solvers`, []);
-    await integralDb.set(`${integralKey}.proposedBy`, proposedBy.id);
+    await challengesDb.set(`${integralKey}.date`, postDate.toISOString());
+    await challengesDb.set(`${integralKey}.difficulty`, difficulty);
+    await challengesDb.set(`${integralKey}.threadId`, thread.id);
+    await challengesDb.set(`${integralKey}.imageUrl`, image.url);
+    await challengesDb.set(`${integralKey}.solvers`, []);
+    await challengesDb.set(`${integralKey}.proposedBy`, proposedBy.id);
 
     return { integralMessage, thread };
 };

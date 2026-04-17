@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, InteractionContextType, MessageFlags, EmbedBuilder } from "discord.js";
-import integralDb from "../../util/integralDb.js";
+import challengesDb from "../../util/challengesDb.js";
 import Log from "../../util/log.js";
 
 // ========================= //
@@ -33,7 +33,7 @@ const getDenseRank = function(userScore, allScores){
  */
 const getLeaderboard = async function(guildId){
     try {
-        const guildData = await integralDb.get(`guild-${guildId}`);
+        const guildData = await challengesDb.get(`guild-${guildId}`);
         const userCounts = new Map();
 
         if (!guildData || typeof guildData !== "object"){
@@ -67,7 +67,7 @@ const getLeaderboard = async function(guildId){
 };
 
 /**
- * Count how many integrals a user has proposed in a guild
+ * Count how many Math Challenges a user has proposed in a guild
  *
  * @param {string} guildId
  * @param {string} userId
@@ -75,7 +75,7 @@ const getLeaderboard = async function(guildId){
  */
 const getProposedCount = async function(guildId, userId){
     try {
-        const guildData = await integralDb.get(`guild-${guildId}`);
+        const guildData = await challengesDb.get(`guild-${guildId}`);
         let count = 0;
 
         if (!guildData || typeof guildData !== "object"){
@@ -122,7 +122,7 @@ export default {
             const targetUser = interaction.options.getUser("user") || interaction.user;
             const userKey = `guild-${interaction.guildId}.user-${targetUser.id}`;
 
-            const solutions = await integralDb.get(`${userKey}.solutions`) || [];
+            const solutions = await challengesDb.get(`${userKey}.solutions`) || [];
 
             if (solutions.length === 0){
                 return await interaction.editReply({

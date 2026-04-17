@@ -4,7 +4,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, PermissionF
 import executeCode from "../service/codeExecution.js";
 import executeSage from "../service/sageExecution.js";
 import { postIntegral } from "../util/postIntegral.js";
-import integralDb from "../util/integralDb.js";
+import challengesDb from "../util/challengesDb.js";
 import { config } from "../../config/config.js";
 import Log from "../util/log.js";
 
@@ -81,7 +81,7 @@ const handlePostProposal = async function(interaction){
     const guildId = interaction.guildId ?? "";
     const proposalKey = `guild-${guildId}.proposal-${msgId}`;
 
-    const proposalData = await integralDb.get(proposalKey);
+    const proposalData = await challengesDb.get(proposalKey);
     if (!proposalData){
         return await interaction.followUp({ content: "Proposal data not found in the database!", flags: [MessageFlags.Ephemeral] });
     }
@@ -105,7 +105,7 @@ const handlePostProposal = async function(interaction){
             proposer,
         );
 
-        await integralDb.set(`${proposalKey}.posted`, true);
+        await challengesDb.set(`${proposalKey}.posted`, true);
 
         await interaction.message.edit({
             content: buildProposalContent(`<@${proposalData.proposerId}>`, proposalData.difficulty, "✅ Posted", `${interaction.user}`),
@@ -133,7 +133,7 @@ const handlePostProposal = async function(interaction){
  */
 const handleChangeDifficulty = async function(interaction){
     const proposalKey = `guild-${interaction.guildId}.proposal-${interaction.message.id}`;
-    const proposalData = await integralDb.get(proposalKey);
+    const proposalData = await challengesDb.get(proposalKey);
 
     if (!proposalData){
         return await interaction.reply({ content: "Proposal data not found in the database!", flags: [MessageFlags.Ephemeral] });
@@ -174,13 +174,13 @@ const handleSelectDifficulty = async function(interaction){
     const guildId = interaction.guildId ?? "";
     const proposalKey = `guild-${guildId}.proposal-${proposalMsgId}`;
 
-    const proposalData = await integralDb.get(proposalKey);
+    const proposalData = await challengesDb.get(proposalKey);
     if (!proposalData){
         return await interaction.update({ content: "Proposal data not found!", components: [] });
     }
 
     const newDifficulty = interaction.values[0];
-    await integralDb.set(`${proposalKey}.difficulty`, newDifficulty);
+    await challengesDb.set(`${proposalKey}.difficulty`, newDifficulty);
 
     try {
         const proposalChannelId = config.ids.int_proposal_channel;
@@ -265,7 +265,7 @@ const handleRejectProposal = async function(interaction){
     const guildId = interaction.guildId ?? "";
     const proposalKey = `guild-${guildId}.proposal-${msgId}`;
 
-    const proposalData = await integralDb.get(proposalKey);
+    const proposalData = await challengesDb.get(proposalKey);
     if (!proposalData){
         return await interaction.followUp({ content: "Proposal data not found in the database!", flags: [MessageFlags.Ephemeral] });
     }
@@ -274,7 +274,7 @@ const handleRejectProposal = async function(interaction){
         return await interaction.followUp({ content: "This integral has already been posted and cannot be rejected.", flags: [MessageFlags.Ephemeral] });
     }
 
-    await integralDb.set(`${proposalKey}.posted`, true);
+    await challengesDb.set(`${proposalKey}.posted`, true);
 
     await interaction.message.edit({
         content: buildProposalContent(`<@${proposalData.proposerId}>`, proposalData.difficulty, "❌ Rejected", `${interaction.user}`, "Rejected by"),

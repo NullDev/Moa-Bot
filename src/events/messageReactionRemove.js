@@ -1,4 +1,4 @@
-import integralDb from "../util/integralDb.js";
+import challengesDb from "../util/challengesDb.js";
 import Log from "../util/log.js";
 
 // ========================= //
@@ -29,7 +29,7 @@ const messageReactionRemove = async function(reaction, user){
     if (reaction.emoji.name !== "✅") return;
 
     const roleSelectKey = `guild-${reaction.message.guildId}.role-select-${reaction.message.id}`;
-    const roleSelectData = await integralDb.get(roleSelectKey);
+    const roleSelectData = await challengesDb.get(roleSelectKey);
 
     if (!roleSelectData) return;
 

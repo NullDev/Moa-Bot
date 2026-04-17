@@ -6,7 +6,7 @@ import { config } from "../config/config.js";
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const integralDb = new QuickDB({
+const challengesDb = new QuickDB({
     filePath: path.resolve("./data/guild_data.sqlite"),
 });
 
@@ -39,7 +39,7 @@ const seedDatabase = async function(){
 
             for (const userId of solvers){
                 const userKey = `guild-${GUILD_ID}.user-${userId}`;
-                const existingSolutions = await integralDb.get(`${userKey}.solutions`) || [];
+                const existingSolutions = await challengesDb.get(`${userKey}.solutions`) || [];
 
                 const alreadyExists = existingSolutions.some(
                     (/** @type {{ date: string; difficulty: string; }} */ sol) => sol.date === isoDate && sol.difficulty === difficulty,
@@ -56,14 +56,14 @@ const seedDatabase = async function(){
                     difficulty,
                 });
 
-                await integralDb.set(`${userKey}.solutions`, existingSolutions);
+                await challengesDb.set(`${userKey}.solutions`, existingSolutions);
                 console.log(`  - Added solution for user ${userId}`);
             }
         }
 
         console.log("\n✅ Database seeding completed successfully!");
 
-        const guildData = await integralDb.get(`guild-${GUILD_ID}`);
+        const guildData = await challengesDb.get(`guild-${GUILD_ID}`);
         if (guildData && typeof guildData === "object"){
             let totalSolutions = 0;
             let userCount = 0;

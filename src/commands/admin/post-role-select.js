@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits, MessageFlags } from "discord.js";
 import { config } from "../../../config/config.js";
-import integralDb from "../../util/integralDb.js";
+import challengesDb from "../../util/challengesDb.js";
 import Log from "../../util/log.js";
 
 // ========================= //
@@ -30,7 +30,7 @@ export default {
 
             if (!roleId){
                 return await interaction.editReply({
-                    content: "Daily integral role is not configured!",
+                    content: "Daily Math Challenge role is not configured!",
                 });
             }
 
@@ -40,7 +40,7 @@ export default {
                 });
             }
 
-            const messageContent = `React with ✅ below to get the <@&${roleId}> role and be notified of daily integral challenges!\nRemove your reaction to remove the role.`;
+            const messageContent = `React with ✅ below to get the <@&${roleId}> role and be notified of daily Math Challenges!\nRemove your reaction to remove the role.`;
 
             const roleSelectMessage = await interaction.channel.send({
                 content: messageContent,
@@ -54,7 +54,7 @@ export default {
             await roleSelectMessage.react("✅");
 
             const roleSelectKey = `guild-${interaction.guildId}.role-select-${roleSelectMessage.id}`;
-            await integralDb.set(roleSelectKey, {
+            await challengesDb.set(roleSelectKey, {
                 roleId,
                 channelId: interaction.channelId,
                 createdAt: new Date().toISOString(),

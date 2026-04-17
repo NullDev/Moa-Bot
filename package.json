@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "private": true,
   "type": "module",
-  "description": "Discord bot for TUT Server. Math utils and daily integral helpers.",
+  "description": "Discord bot for TUT Server. Math utils and daily Math Challenge helpers.",
   "main": "src/app.js",
   "engines": {
     "node": ">=22.0.0"

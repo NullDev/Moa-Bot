@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder, InteractionContextType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } from "discord.js";
 import generateImage from "../../service/topImageGenerator.js";
-import integralDb from "../../util/integralDb.js";
+import challengesDb from "../../util/challengesDb.js";
 import Log from "../../util/log.js";
 
 // ========================= //
@@ -31,7 +31,7 @@ export default {
 
             const sortBy = interaction.options.getString("sort") || "solved";
 
-            const guildData = await integralDb.get(`guild-${interaction.guildId}`);
+            const guildData = await challengesDb.get(`guild-${interaction.guildId}`);
             const userStats = new Map();
             const proposedCounts = new Map();
 

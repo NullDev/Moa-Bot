@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits, MessageFlags } from "discord.js";
-import integralDb from "../../util/integralDb.js";
+import challengesDb from "../../util/challengesDb.js";
 import Log from "../../util/log.js";
 
 // ========================= //
@@ -81,7 +81,7 @@ export default {
             }
 
             const integralKey = `guild-${guildId}.integral-${messageId}`;
-            const integralData = await integralDb.get(integralKey);
+            const integralData = await challengesDb.get(integralKey);
 
             if (!integralData){
                 return await interaction.editReply({
@@ -89,21 +89,21 @@ export default {
                 });
             }
 
-            const solvers = await integralDb.get(`${integralKey}.solvers`) || [];
+            const solvers = await challengesDb.get(`${integralKey}.solvers`) || [];
 
             for (const odSolverId of solvers){
                 const userKey = `guild-${guildId}.user-${odSolverId}`;
-                const userSolutions = await integralDb.get(`${userKey}.solutions`) || [];
+                const userSolutions = await challengesDb.get(`${userKey}.solutions`) || [];
 
                 const updatedSolutions = userSolutions.filter(
                     (/** @type {{ messageId: string }} */ sol) => sol.messageId !== messageId,
                 );
 
                 if (updatedSolutions.length > 0){
-                    await integralDb.set(`${userKey}.solutions`, updatedSolutions);
+                    await challengesDb.set(`${userKey}.solutions`, updatedSolutions);
                 }
                 else {
-                    await integralDb.delete(`${userKey}.solutions`);
+                    await challengesDb.delete(`${userKey}.solutions`);
                 }
             }
 
@@ -122,7 +122,7 @@ export default {
 
             await message.delete();
 
-            await integralDb.delete(integralKey);
+            await challengesDb.delete(integralKey);
 
             Log.info(`Deleted Math Challenge post ${messageId} by ${interaction.user.tag} (${solvers.length} solver entries cleaned)`);
 

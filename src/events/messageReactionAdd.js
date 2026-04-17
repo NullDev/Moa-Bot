@@ -1,5 +1,5 @@
 import { PermissionFlagsBits } from "discord.js";
-import integralDb from "../util/integralDb.js";
+import challengesDb from "../util/challengesDb.js";
 import { config } from "../../config/config.js";
 import Log from "../util/log.js";
 
@@ -48,7 +48,7 @@ const messageReactionAdd = async function(reaction, user){
 
     if (reaction.emoji.id === "1478725030979305482"){
         const texKey = `guild-${reaction.message.guildId}.tex-${reaction.message.id}`;
-        const texOwner = await integralDb.get(texKey);
+        const texOwner = await challengesDb.get(texKey);
 
         if (!texOwner) return;
 
@@ -57,7 +57,7 @@ const messageReactionAdd = async function(reaction, user){
             return;
         }
 
-        await integralDb.delete(texKey);
+        await challengesDb.delete(texKey);
         await reaction.message.delete();
         return;
     }
@@ -65,7 +65,7 @@ const messageReactionAdd = async function(reaction, user){
     if (reaction.emoji.name !== "✅") return;
 
     const roleSelectKey = `guild-${reaction.message.guildId}.role-select-${reaction.message.id}`;
-    const roleSelectData = await integralDb.get(roleSelectKey);
+    const roleSelectData = await challengesDb.get(roleSelectKey);
 
     if (roleSelectData){
         try {
@@ -97,7 +97,7 @@ const messageReactionAdd = async function(reaction, user){
 
         const integralKey = `guild-${reaction.message.guildId}.integral-${parentMessage.id}`;
 
-        const integralData = await integralDb.get(integralKey);
+        const integralData = await challengesDb.get(integralKey);
         if (!integralData) return;
 
         const member = await reaction.message.guild?.members.fetch(user.id);
@@ -147,7 +147,7 @@ const messageReactionAdd = async function(reaction, user){
             }
         }
 
-        const solvers = await integralDb.get(`${integralKey}.solvers`) || [];
+        const solvers = await challengesDb.get(`${integralKey}.solvers`) || [];
 
         if (solvers.includes(solver.id)){
             Log.info(`Solver ${solver.tag} already in list for Math Challenge ${parentMessage.id}`);
@@ -159,10 +159,10 @@ const messageReactionAdd = async function(reaction, user){
         }
 
         solvers.push(solver.id);
-        await integralDb.set(`${integralKey}.solvers`, solvers);
+        await challengesDb.set(`${integralKey}.solvers`, solvers);
 
         const userKey = `guild-${reaction.message.guildId}.user-${solver.id}`;
-        const userSolutions = await integralDb.get(`${userKey}.solutions`) || [];
+        const userSolutions = await challengesDb.get(`${userKey}.solutions`) || [];
 
         userSolutions.push({
             date: integralData.date,
@@ -170,7 +170,7 @@ const messageReactionAdd = async function(reaction, user){
             difficulty: integralData.difficulty,
         });
 
-        await integralDb.set(`${userKey}.solutions`, userSolutions);
+        await challengesDb.set(`${userKey}.solutions`, userSolutions);
 
         const solverMentions = await Promise.all(
             solvers.map(async(/** @type {import("discord.js").UserResolvable} */ solverId) => {

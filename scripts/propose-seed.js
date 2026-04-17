@@ -6,7 +6,7 @@ import { config } from "../config/config.js";
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const integralDb = new QuickDB({
+const challengesDb = new QuickDB({
     filePath: path.resolve("./data/guild_data.sqlite"),
 });
 
@@ -29,7 +29,7 @@ const seedProposers = async function(){
     console.log("Starting proposer seeding...");
 
     try {
-        const guildData = await integralDb.get(`guild-${GUILD_ID}`) || {};
+        const guildData = await challengesDb.get(`guild-${GUILD_ID}`) || {};
         let updated = 0;
         let created = 0;
 
@@ -54,15 +54,15 @@ const seedProposers = async function(){
 
             if (foundKey){
                 const integralKey = `guild-${GUILD_ID}.${foundKey}`;
-                await integralDb.set(`${integralKey}.proposedBy`, proposer);
-                console.log(`  - Updated existing integral: ${foundKey}`);
+                await challengesDb.set(`${integralKey}.proposedBy`, proposer);
+                console.log(`  - Updated existing Math Challenge: ${foundKey}`);
                 updated++;
             }
             else {
                 const integralKey = `guild-${GUILD_ID}.integral-${seedKey}`;
-                await integralDb.set(`${integralKey}.date`, isoDate);
-                await integralDb.set(`${integralKey}.proposedBy`, proposer);
-                console.log(`  - Created new integral entry: integral-${seedKey}`);
+                await challengesDb.set(`${integralKey}.date`, isoDate);
+                await challengesDb.set(`${integralKey}.proposedBy`, proposer);
+                console.log(`  - Created new Math Challenge entry: integral-${seedKey}`);
                 created++;
             }
         }
@@ -72,7 +72,7 @@ const seedProposers = async function(){
         console.log(`  - Updated existing entries: ${updated}`);
         console.log(`  - Created new entries: ${created}`);
 
-        const updatedGuildData = await integralDb.get(`guild-${GUILD_ID}`);
+        const updatedGuildData = await challengesDb.get(`guild-${GUILD_ID}`);
         const proposerCounts = new Map();
 
         if (updatedGuildData && typeof updatedGuildData === "object"){
@@ -88,7 +88,7 @@ const seedProposers = async function(){
 
         console.log("\nProposer counts:");
         for (const [odUserId, count] of proposerCounts.entries()){
-            console.log(`  - ${odUserId}: ${count} integrals proposed`);
+            console.log(`  - ${odUserId}: ${count} Math Challenges proposed`);
         }
     }
     catch (error){
