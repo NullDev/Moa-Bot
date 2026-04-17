@@ -26,11 +26,11 @@ const listChallenges = async function(){
             return;
         }
 
-        const integrals = [];
+        const challenges = [];
 
         for (const [key, value] of Object.entries(guildData)){
             if (key.startsWith("integral-") && value && typeof value === "object"){
-                integrals.push({
+                challenges.push({
                     key,
                     messageId: key.replace("integral-", ""),
                     date: value.date || "unknown",
@@ -41,23 +41,23 @@ const listChallenges = async function(){
             }
         }
 
-        if (integrals.length === 0){
-            console.log("No integral entries found.");
+        if (challenges.length === 0){
+            console.log("No Math Challenge entries found.");
             return;
         }
 
-        console.log(`Found ${integrals.length} integral entries:\n`);
+        console.log(`Found ${challenges.length} Math Challenge entries:\n`);
 
-        for (const integral of integrals){
-            const date = integral.date !== "unknown"
-                ? new Date(integral.date).toLocaleDateString()
+        for (const challenge of challenges){
+            const date = challenge.date !== "unknown"
+                ? new Date(challenge.date).toLocaleDateString()
                 : "unknown";
-            console.log(`  Key: ${integral.key}`);
-            console.log(`  Message ID: ${integral.messageId}`);
+            console.log(`  Key: ${challenge.key}`);
+            console.log(`  Message ID: ${challenge.messageId}`);
             console.log(`  Date: ${date}`);
-            console.log(`  Difficulty: ${integral.difficulty}`);
-            console.log(`  Solvers: ${integral.solvers}`);
-            console.log(`  Proposed by: ${integral.proposedBy}`);
+            console.log(`  Difficulty: ${challenge.difficulty}`);
+            console.log(`  Solvers: ${challenge.solvers}`);
+            console.log(`  Proposed by: ${challenge.proposedBy}`);
             console.log("");
         }
 
@@ -70,7 +70,7 @@ const listChallenges = async function(){
 };
 
 /**
- * Delete a specific integral entry
+ * Delete a specific Math Challenge entry
  *
  * @param {string} messageId
  */
@@ -78,15 +78,15 @@ const deleteChallenge = async function(messageId){
     console.log(`Deleting Math Challenge entry for message ID: ${messageId}\n`);
 
     try {
-        const integralKey = `guild-${GUILD_ID}.integral-${messageId}`;
-        const integralData = await challengesDb.get(integralKey);
+        const challengeKey = `guild-${GUILD_ID}.integral-${messageId}`;
+        const challengeData = await challengesDb.get(challengeKey);
 
-        if (!integralData){
+        if (!challengeData){
             console.log("No Math Challenge entry found with that message ID.");
             return;
         }
 
-        const solvers = integralData.solvers || [];
+        const solvers = challengeData.solvers || [];
         let cleanedSolvers = 0;
 
         for (const odSolverId of solvers){
@@ -106,7 +106,7 @@ const deleteChallenge = async function(messageId){
             cleanedSolvers++;
         }
 
-        await challengesDb.delete(integralKey);
+        await challengesDb.delete(challengeKey);
 
         console.log("✅ Successfully deleted Math Challenge entry!");
         console.log(`  - Cleaned up ${cleanedSolvers} solver entries`);

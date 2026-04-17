@@ -24,7 +24,7 @@ const winners = [
 ];
 
 /**
- * Seed the database with historical integral data
+ * Seed the database with historical Math Challenge data
  */
 const seedDatabase = async function(){
     console.log("Starting database seeding...");

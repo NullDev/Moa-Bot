@@ -80,16 +80,16 @@ export default {
                 });
             }
 
-            const integralKey = `guild-${guildId}.integral-${messageId}`;
-            const integralData = await challengesDb.get(integralKey);
+            const challengeKey = `guild-${guildId}.integral-${messageId}`;
+            const challengeData = await challengesDb.get(challengeKey);
 
-            if (!integralData){
+            if (!challengeData){
                 return await interaction.editReply({
                     content: "This message is not a registered Math Challenge!",
                 });
             }
 
-            const solvers = await challengesDb.get(`${integralKey}.solvers`) || [];
+            const solvers = await challengesDb.get(`${challengeKey}.solvers`) || [];
 
             for (const odSolverId of solvers){
                 const userKey = `guild-${guildId}.user-${odSolverId}`;
@@ -107,7 +107,7 @@ export default {
                 }
             }
 
-            const { threadId } = integralData;
+            const { threadId } = challengeData;
             if (threadId){
                 try {
                     const thread = await interaction.client.channels.fetch(threadId).catch(() => null);
@@ -122,7 +122,7 @@ export default {
 
             await message.delete();
 
-            await challengesDb.delete(integralKey);
+            await challengesDb.delete(challengeKey);
 
             Log.info(`Deleted Math Challenge post ${messageId} by ${interaction.user.tag} (${solvers.length} solver entries cleaned)`);
 

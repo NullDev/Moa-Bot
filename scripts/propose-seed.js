@@ -53,15 +53,15 @@ const seedProposers = async function(){
             }
 
             if (foundKey){
-                const integralKey = `guild-${GUILD_ID}.${foundKey}`;
-                await challengesDb.set(`${integralKey}.proposedBy`, proposer);
+                const challengeKey = `guild-${GUILD_ID}.${foundKey}`;
+                await challengesDb.set(`${challengeKey}.proposedBy`, proposer);
                 console.log(`  - Updated existing Math Challenge: ${foundKey}`);
                 updated++;
             }
             else {
-                const integralKey = `guild-${GUILD_ID}.integral-${seedKey}`;
-                await challengesDb.set(`${integralKey}.date`, isoDate);
-                await challengesDb.set(`${integralKey}.proposedBy`, proposer);
+                const challengeKey = `guild-${GUILD_ID}.integral-${seedKey}`;
+                await challengesDb.set(`${challengeKey}.date`, isoDate);
+                await challengesDb.set(`${challengeKey}.proposedBy`, proposer);
                 console.log(`  - Created new Math Challenge entry: integral-${seedKey}`);
                 created++;
             }

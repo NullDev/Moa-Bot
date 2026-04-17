@@ -48,9 +48,9 @@ const formatDate = function(date){
  * @param {string} difficulty
  * @param {import("discord.js").User} proposedBy
  * @param {Date} [postDate]
- * @returns {Promise<{ integralMessage: import("discord.js").Message, thread: import("discord.js").AnyThreadChannel }>}
+ * @returns {Promise<{ challengeMessage: import("discord.js").Message, thread: import("discord.js").AnyThreadChannel }>}
  */
-const postIntegral = async function(client, guildId, image, difficulty, proposedBy, postDate = new Date()){
+const postMathChallenge = async function(client, guildId, image, difficulty, proposedBy, postDate = new Date()){
     const channelId = config.ids.daily_int_channel;
     const roleId = config.ids.daily_int_role;
 
@@ -62,27 +62,27 @@ const postIntegral = async function(client, guildId, image, difficulty, proposed
     const dateStr = formatDate(postDate);
     const messageContent = `# ${dateStr} Math Challenge (${difficulty})\nProposed by: ${proposedBy}`;
 
-    const integralMessage = await channel.send({
+    const challengeMessage = await channel.send({
         content: messageContent,
         files: [image],
     });
 
-    const thread = await integralMessage.startThread({
+    const thread = await challengeMessage.startThread({
         name: `${dateStr} - ${difficulty}`,
         autoArchiveDuration: 1440,
     });
 
     await thread.send({ content: `<@&${roleId}>` });
 
-    const integralKey = `guild-${guildId}.integral-${integralMessage.id}`;
-    await challengesDb.set(`${integralKey}.date`, postDate.toISOString());
-    await challengesDb.set(`${integralKey}.difficulty`, difficulty);
-    await challengesDb.set(`${integralKey}.threadId`, thread.id);
-    await challengesDb.set(`${integralKey}.imageUrl`, image.url);
-    await challengesDb.set(`${integralKey}.solvers`, []);
-    await challengesDb.set(`${integralKey}.proposedBy`, proposedBy.id);
+    const challengeKey = `guild-${guildId}.integral-${challengeMessage.id}`;
+    await challengesDb.set(`${challengeKey}.date`, postDate.toISOString());
+    await challengesDb.set(`${challengeKey}.difficulty`, difficulty);
+    await challengesDb.set(`${challengeKey}.threadId`, thread.id);
+    await challengesDb.set(`${challengeKey}.imageUrl`, image.url);
+    await challengesDb.set(`${challengeKey}.solvers`, []);
+    await challengesDb.set(`${challengeKey}.proposedBy`, proposedBy.id);
 
-    return { integralMessage, thread };
+    return { challengeMessage, thread };
 };
 
-export { formatDate, getOrdinalSuffix, postIntegral };
+export { formatDate, getOrdinalSuffix, postMathChallenge };

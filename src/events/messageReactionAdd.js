@@ -95,14 +95,14 @@ const messageReactionAdd = async function(reaction, user){
         const parentMessage = await parentChannel.messages.fetch(channel.id);
         if (!parentMessage) return;
 
-        const integralKey = `guild-${reaction.message.guildId}.integral-${parentMessage.id}`;
+        const challengeKey = `guild-${reaction.message.guildId}.integral-${parentMessage.id}`;
 
-        const integralData = await challengesDb.get(integralKey);
-        if (!integralData) return;
+        const challengeData = await challengesDb.get(challengeKey);
+        if (!challengeData) return;
 
         const member = await reaction.message.guild?.members.fetch(user.id);
         const isModerator = member?.permissions.has(PermissionFlagsBits.ModerateMembers);
-        const isProposer = integralData.proposedBy && integralData.proposedBy === user.id;
+        const isProposer = challengeData.proposedBy && challengeData.proposedBy === user.id;
 
         if (!isModerator && !isProposer){
             return;
@@ -147,7 +147,7 @@ const messageReactionAdd = async function(reaction, user){
             }
         }
 
-        const solvers = await challengesDb.get(`${integralKey}.solvers`) || [];
+        const solvers = await challengesDb.get(`${challengeKey}.solvers`) || [];
 
         if (solvers.includes(solver.id)){
             Log.info(`Solver ${solver.tag} already in list for Math Challenge ${parentMessage.id}`);
@@ -159,15 +159,15 @@ const messageReactionAdd = async function(reaction, user){
         }
 
         solvers.push(solver.id);
-        await challengesDb.set(`${integralKey}.solvers`, solvers);
+        await challengesDb.set(`${challengeKey}.solvers`, solvers);
 
         const userKey = `guild-${reaction.message.guildId}.user-${solver.id}`;
         const userSolutions = await challengesDb.get(`${userKey}.solutions`) || [];
 
         userSolutions.push({
-            date: integralData.date,
+            date: challengeData.date,
             messageId: parentMessage.id,
-            difficulty: integralData.difficulty,
+            difficulty: challengeData.difficulty,
         });
 
         await challengesDb.set(`${userKey}.solutions`, userSolutions);

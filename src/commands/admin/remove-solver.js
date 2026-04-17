@@ -85,16 +85,16 @@ export default {
                 });
             }
 
-            const integralKey = `guild-${guildId}.integral-${messageId}`;
-            const integralData = await challengesDb.get(integralKey);
+            const challengeKey = `guild-${guildId}.integral-${messageId}`;
+            const challengeData = await challengesDb.get(challengeKey);
 
-            if (!integralData){
+            if (!challengeData){
                 return await interaction.editReply({
                     content: "This message is not a registered Math Challenge!",
                 });
             }
 
-            const solvers = await challengesDb.get(`${integralKey}.solvers`) || [];
+            const solvers = await challengesDb.get(`${challengeKey}.solvers`) || [];
 
             if (!solvers.includes(user.id)){
                 return await interaction.editReply({
@@ -103,7 +103,7 @@ export default {
             }
 
             const updatedSolvers = solvers.filter((/** @type {string} */ id) => id !== user.id);
-            await challengesDb.set(`${integralKey}.solvers`, updatedSolvers);
+            await challengesDb.set(`${challengeKey}.solvers`, updatedSolvers);
 
             const userKey = `guild-${guildId}.user-${user.id}`;
             const userSolutions = await challengesDb.get(`${userKey}.solutions`) || [];

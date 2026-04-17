@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, InteractionContextType, PermissionFlagsBits, MessageFlags } from "discord.js";
-import { postIntegral } from "../../util/postIntegral.js";
+import { postMathChallenge } from "../../util/postMathChallenge.js";
 import Log from "../../util/log.js";
 
 // ========================= //
@@ -20,7 +20,7 @@ export default {
                 .setRequired(true))
         .addStringOption(option =>
             option.setName("difficulty")
-                .setDescription("Difficulty level of the integral")
+                .setDescription("Difficulty level of the Math Challenge")
                 .setRequired(true)
                 .addChoices(
                     { name: "Easy", value: "Easy" },
@@ -72,7 +72,7 @@ export default {
                 postDate = parsed;
             }
 
-            const { integralMessage } = await postIntegral(
+            const { challengeMessage } = await postMathChallenge(
                 interaction.client,
                 interaction.guildId ?? "",
                 image,
@@ -81,10 +81,10 @@ export default {
                 postDate,
             );
 
-            Log.info(`Posted daily Math Challenge: ${integralMessage.id} by ${interaction.user.tag}`);
+            Log.info(`Posted daily Math Challenge: ${challengeMessage.id} by ${interaction.user.tag}`);
 
             return await interaction.editReply({
-                content: `Successfully posted the daily Math Challenge! [Jump to message](${integralMessage.url})`,
+                content: `Successfully posted the daily Math Challenge! [Jump to message](${challengeMessage.url})`,
             });
         }
         catch (error){
