@@ -11,12 +11,12 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("(ADMIN) Post the daily integral challenge.")
+        .setDescription("(ADMIN) Post the daily Math Challenge.")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addAttachmentOption(option =>
             option.setName("image")
-                .setDescription("The integral challenge image")
+                .setDescription("The Math Challenge image (preferably LaTeX rendered)")
                 .setRequired(true))
         .addStringOption(option =>
             option.setName("difficulty")
@@ -37,7 +37,7 @@ export default {
                 .setRequired(false))
         .addStringOption(option =>
             option.setName("date")
-                .setDescription("Override date (YYYY-MM-DD format) for posting past integrals")
+                .setDescription("Override date (YYYY-MM-DD format) for posting past Math Challenges (optional)")
                 .setRequired(false)),
     /**
      * @param {import("discord.js").ChatInputCommandInteraction} interaction
@@ -81,17 +81,17 @@ export default {
                 postDate,
             );
 
-            Log.info(`Posted daily integral: ${integralMessage.id} by ${interaction.user.tag}`);
+            Log.info(`Posted daily Math Challenge: ${integralMessage.id} by ${interaction.user.tag}`);
 
             return await interaction.editReply({
-                content: `Successfully posted the daily integral challenge! [Jump to message](${integralMessage.url})`,
+                content: `Successfully posted the daily Math Challenge! [Jump to message](${integralMessage.url})`,
             });
         }
         catch (error){
             const err = error instanceof Error ? error : new Error(String(error));
-            Log.error("Error posting daily integral: ", err);
+            Log.error("Error posting daily Math Challenge: ", err);
 
-            const errorMessage = "Failed to post the daily integral challenge. Please check the logs.";
+            const errorMessage = "Failed to post the daily Math Challenge. Please check the logs.";
             if (interaction.deferred){
                 return await interaction.editReply({ content: errorMessage });
             }

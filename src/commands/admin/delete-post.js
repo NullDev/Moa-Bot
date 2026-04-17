@@ -31,12 +31,12 @@ const parseMessageLink = function(link){
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("(ADMIN) Delete an integral post, its thread, and clean up the database.")
+        .setDescription("(ADMIN) Delete a Math Challenge post, its thread, and clean up the database.")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addStringOption((option) =>
             option.setName("message")
-                .setDescription("Link to the integral message to delete")
+                .setDescription("Link to the Math Challenge message to delete")
                 .setRequired(true)),
     /**
      * @param {import("discord.js").ChatInputCommandInteraction} interaction
@@ -85,7 +85,7 @@ export default {
 
             if (!integralData){
                 return await interaction.editReply({
-                    content: "This message is not a registered integral challenge!",
+                    content: "This message is not a registered Math Challenge!",
                 });
             }
 
@@ -112,7 +112,7 @@ export default {
                 try {
                     const thread = await interaction.client.channels.fetch(threadId).catch(() => null);
                     if (thread?.isThread()){
-                        await thread.delete("Integral post deleted by admin");
+                        await thread.delete("Math Challenge post deleted by admin");
                     }
                 }
                 catch (err){
@@ -124,17 +124,17 @@ export default {
 
             await integralDb.delete(integralKey);
 
-            Log.info(`Deleted integral post ${messageId} by ${interaction.user.tag} (${solvers.length} solver entries cleaned)`);
+            Log.info(`Deleted Math Challenge post ${messageId} by ${interaction.user.tag} (${solvers.length} solver entries cleaned)`);
 
             return await interaction.editReply({
-                content: `Successfully deleted the integral post and cleaned up ${solvers.length} solver entries from the database.`,
+                content: `Successfully deleted the Math Challenge post and cleaned up ${solvers.length} solver entries from the database.`,
             });
         }
         catch (error){
             const err = error instanceof Error ? error : new Error(String(error));
-            Log.error("Error deleting integral post: ", err);
+            Log.error("Error deleting Math Challenge post: ", err);
 
-            const errorMessage = "Failed to delete integral post. Please check the logs.";
+            const errorMessage = "Failed to delete Math Challenge post. Please check the logs.";
             if (interaction.deferred){
                 return await interaction.editReply({ content: errorMessage });
             }

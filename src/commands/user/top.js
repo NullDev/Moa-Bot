@@ -12,11 +12,11 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("View the top integral solvers leaderboard.")
+        .setDescription("View the top Math Challenge solvers leaderboard.")
         .setContexts([InteractionContextType.Guild])
         .addStringOption(option =>
             option.setName("sort")
-                .setDescription("Sort by solved (default) or proposed integrals")
+                .setDescription("Sort by solved (default) or proposed Math Challenges")
                 .setRequired(false)
                 .addChoices(
                     { name: "Solved", value: "solved" },
@@ -37,7 +37,7 @@ export default {
 
             if (!guildData || typeof guildData !== "object"){
                 return await interaction.editReply({
-                    content: "No integral statistics available yet!",
+                    content: "No Math Challenge statistics available yet!",
                 });
             }
 
@@ -79,7 +79,7 @@ export default {
 
             if (userStats.size === 0){
                 return await interaction.editReply({
-                    content: "No integral statistics available yet!",
+                    content: "No Math Challenge statistics available yet!",
                 });
             }
 
@@ -191,12 +191,12 @@ export default {
                     .setName("top.png");
 
                 const titleText = sortBy === "proposed"
-                    ? "🏆┃Top Integral Proposers"
-                    : "🏆┃Top Integral Solvers";
+                    ? "🏆┃Top Math Challenge Proposers"
+                    : "🏆┃Top Math Challenge Solvers";
 
                 const descText = sortBy === "proposed"
-                    ? `Leaderboard sorted by proposed integrals.\nPage ${page + 1} of ${totalPages}`
-                    : `Leaderboard sorted by solved integrals.\nPage ${page + 1} of ${totalPages}`;
+                    ? `Leaderboard sorted by proposed Math Challenges.\nPage ${page + 1} of ${totalPages}`
+                    : `Leaderboard sorted by solved Math Challenges.\nPage ${page + 1} of ${totalPages}`;
 
                 const embed = new EmbedBuilder()
                     .setColor(0x5865F2)

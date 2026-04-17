@@ -102,7 +102,7 @@ const getProposedCount = async function(guildId, userId){
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("View integral solving stats of yourself or a user.")
+        .setDescription("View Math Challenge solving stats of yourself or a user.")
         .setContexts([InteractionContextType.Guild])
         .addUserOption(option =>
             option.setName("user")
@@ -127,8 +127,8 @@ export default {
             if (solutions.length === 0){
                 return await interaction.editReply({
                     content: targetUser.id === interaction.user.id
-                        ? "You haven't solved any integrals yet!"
-                        : `${targetUser} hasn't solved any integrals yet!`,
+                        ? "You haven't solved any Math Challenges yet!"
+                        : `${targetUser} hasn't solved any Math Challenges yet!`,
                 });
             }
 
@@ -164,7 +164,7 @@ export default {
             }));
 
             const embed = new EmbedBuilder()
-                .setTitle(`${targetUser.username}'s Integral Statistics`)
+                .setTitle(`${targetUser.username}'s Math Challenge Statistics`)
                 .setColor(0x5865F2)
                 .setThumbnail(targetUser.displayAvatarURL())
                 .addFields(
@@ -195,9 +195,9 @@ export default {
         }
         catch (error){
             const err = error instanceof Error ? error : new Error(String(error));
-            Log.error("Error getting integral stats: ", err);
+            Log.error("Error getting Math Challenge stats: ", err);
 
-            const errorMessage = "Failed to retrieve integral statistics.";
+            const errorMessage = "Failed to retrieve Math Challenge statistics.";
             if (interaction.deferred){
                 return await interaction.editReply({ content: errorMessage });
             }

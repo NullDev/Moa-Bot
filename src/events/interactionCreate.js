@@ -27,7 +27,7 @@ const statDb = new QuickDB({
  * @returns {string}
  */
 const buildProposalContent = (proposerMention, difficulty, status, actorMention, actorLabel = "Approved by") => {
-    let content = `**Integral Proposal**\nProposer: ${proposerMention}\nProposed Difficulty: ${difficulty}\nStatus: ${status}`;
+    let content = `**Math Challenge Proposal**\nProposer: ${proposerMention}\nProposed Difficulty: ${difficulty}\nStatus: ${status}`;
     if (actorMention) content += `\n${actorLabel}: ${actorMention}`;
     return content;
 };
@@ -50,7 +50,7 @@ const DIFFICULTY_CHOICES = [
 const buildDisabledRow = () => new ActionRowBuilder().addComponents(
     new ButtonBuilder()
         .setCustomId("post_proposal")
-        .setLabel("Post Integral")
+        .setLabel("Post Math Challenge")
         .setStyle(ButtonStyle.Success)
         .setDisabled(true),
     new ButtonBuilder()
@@ -66,13 +66,13 @@ const buildDisabledRow = () => new ActionRowBuilder().addComponents(
 );
 
 /**
- * Handle "Post Integral" button
+ * Handle "Post Math Challenge" button
  *
  * @param {import("discord.js").ButtonInteraction} interaction
  */
 const handlePostProposal = async function(interaction){
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)){
-        return await interaction.reply({ content: "You don't have permission to post integrals!", flags: [MessageFlags.Ephemeral] });
+        return await interaction.reply({ content: "You don't have permission to post Math Challenges!", flags: [MessageFlags.Ephemeral] });
     }
 
     await interaction.deferUpdate();
@@ -87,7 +87,7 @@ const handlePostProposal = async function(interaction){
     }
 
     if (proposalData.posted){
-        return await interaction.followUp({ content: "This integral has already been posted!", flags: [MessageFlags.Ephemeral] });
+        return await interaction.followUp({ content: "This Math Challenge has already been posted!", flags: [MessageFlags.Ephemeral] });
     }
 
     const image = interaction.message.attachments.first();
@@ -112,17 +112,17 @@ const handlePostProposal = async function(interaction){
             components: [/** @type {any} */ (buildDisabledRow())],
         });
 
-        Log.info(`Proposal ${msgId} posted as integral ${integralMessage.id} by ${interaction.user.tag}`);
+        Log.info(`Proposal ${msgId} posted as Math Challenge ${integralMessage.id} by ${interaction.user.tag}`);
 
         return await interaction.followUp({
-            content: `✅ Posted! [Jump to integral](${integralMessage.url})`,
+            content: `✅ Posted! [Jump to Math Challenge](${integralMessage.url})`,
             flags: [MessageFlags.Ephemeral],
         });
     }
     catch (error){
         const err = error instanceof Error ? error : new Error(String(error));
-        Log.error("Error posting proposal as integral: ", err);
-        return await interaction.followUp({ content: "Failed to post the integral. Please check the logs.", flags: [MessageFlags.Ephemeral] });
+        Log.error("Error posting proposal as Math Challenge: ", err);
+        return await interaction.followUp({ content: "Failed to post the Math Challenge. Please check the logs.", flags: [MessageFlags.Ephemeral] });
     }
 };
 
@@ -140,7 +140,7 @@ const handleChangeDifficulty = async function(interaction){
     }
 
     if (proposalData.posted){
-        return await interaction.reply({ content: "This integral has already been posted — difficulty cannot be changed.", flags: [MessageFlags.Ephemeral] });
+        return await interaction.reply({ content: "This Math Challenge has already been posted — difficulty cannot be changed.", flags: [MessageFlags.Ephemeral] });
     }
 
     const selectMenu = new StringSelectMenuBuilder()

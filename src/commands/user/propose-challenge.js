@@ -18,16 +18,16 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
  * @returns {string}
  */
 const buildProposalContent = (proposerMention, difficulty, status) =>
-    `**Integral Proposal**\nProposer: ${proposerMention}\nProposed Difficulty: ${difficulty}\nStatus: ${status}`;
+    `**Math Challenge Proposal**\nProposer: ${proposerMention}\nProposed Difficulty: ${difficulty}\nStatus: ${status}`;
 
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Propose a daily integral challenge for mods to review.")
+        .setDescription("Propose a Math Challenge for mods to review.")
         .setContexts([InteractionContextType.Guild])
         .addAttachmentOption(option =>
             option.setName("image")
-                .setDescription("The integral challenge image")
+                .setDescription("The Math Challenge image (preferably LaTeX rendered)")
                 .setRequired(true))
         .addStringOption(option =>
             option.setName("difficulty")
@@ -94,15 +94,15 @@ export default {
             await integralDb.set(`${proposalKey}.difficulty`, difficulty);
             await integralDb.set(`${proposalKey}.posted`, false);
 
-            Log.info(`Integral proposal submitted by ${interaction.user.tag}: message ${proposalMessage.id}`);
+            Log.info(`Math Challenge proposal submitted by ${interaction.user.tag}: message ${proposalMessage.id}`);
 
             return await interaction.editReply({
-                content: "Your integral proposal has been submitted for review! Thank you c:",
+                content: "Your Math Challenge proposal has been submitted for review! Thank you c:",
             });
         }
         catch (error){
             const err = error instanceof Error ? error : new Error(String(error));
-            Log.error("Error submitting integral proposal: ", err);
+            Log.error("Error submitting Math Challenge proposal: ", err);
 
             const errorMessage = "Failed to submit the proposal. Please check the logs.";
             if (interaction.deferred){

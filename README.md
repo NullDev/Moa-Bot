@@ -7,7 +7,7 @@
 
 ## :question: What does it do?
 
-Discord bot for TUT Server. Math utils and daily integral helpers.
+Discord bot for TUT Server. Math utils and daily Math Challenge helpers.
 
 <hr>
 

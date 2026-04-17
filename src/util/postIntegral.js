@@ -54,13 +54,13 @@ const postIntegral = async function(client, guildId, image, difficulty, proposed
     const channelId = config.ids.daily_int_channel;
     const roleId = config.ids.daily_int_role;
 
-    if (!channelId || !roleId) throw new Error("Daily integral channel or role is not configured!");
+    if (!channelId || !roleId) throw new Error("Math-Challenges channel or role is not configured!");
 
     const channel = await client.channels.fetch(channelId);
-    if (!channel?.isTextBased() || !("send" in channel)) throw new Error("Could not find the daily integral channel!");
+    if (!channel?.isTextBased() || !("send" in channel)) throw new Error("Could not find the Math-Challenges channel!");
 
     const dateStr = formatDate(postDate);
-    const messageContent = `# ${dateStr} Integral (${difficulty})\nProposed by: ${proposedBy}`;
+    const messageContent = `# ${dateStr} Math Challenge (${difficulty})\nProposed by: ${proposedBy}`;
 
     const integralMessage = await channel.send({
         content: messageContent,

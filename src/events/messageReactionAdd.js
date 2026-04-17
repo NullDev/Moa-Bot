@@ -20,7 +20,7 @@ const fail = async function(reaction, channel, solver, user){
     await reaction.users.remove(user.id);
     const who = solver.id === config.ids.moabot ? "I" : "that bot";
     await channel.send({
-        content: `<@${user.id}>, errm... ackshually ${who} can't solve integrals :point_up::nerd: \nI removed the reaction.`,
+        content: `<@${user.id}>, errm... ackshually ${who} can't solve Math Challenges :point_up::nerd: \nI removed the reaction.`,
         files: ["./assets/errm.jpg"],
     });
 };
@@ -124,7 +124,7 @@ const messageReactionAdd = async function(reaction, user){
                         }
                         const who = solver.id === config.ids.moabot ? "I" : "that bot";
                         await channel.send({
-                            content: `<@${user.id}>, errm... ackshually ${who} can't solve integrals :point_up::nerd: \nBut I'm guessing you meant <@${refUser.id}> so I'll use them instead.`,
+                            content: `<@${user.id}>, errm... ackshually ${who} can't solve Math Challenges :point_up::nerd: \nBut I'm guessing you meant <@${refUser.id}> so I'll use them instead.`,
                             files: ["./assets/errm.jpg"],
                         });
                         solver = refUser;
@@ -150,9 +150,9 @@ const messageReactionAdd = async function(reaction, user){
         const solvers = await integralDb.get(`${integralKey}.solvers`) || [];
 
         if (solvers.includes(solver.id)){
-            Log.info(`Solver ${solver.tag} already in list for integral ${parentMessage.id}`);
+            Log.info(`Solver ${solver.tag} already in list for Math Challenge ${parentMessage.id}`);
             await channel.send({
-                content: `<@${user.id}>, seems like you are blind. <@${solver.id}> has already solved this integral.\nI removed the reaction...`,
+                content: `<@${user.id}>, seems like you are blind. <@${solver.id}> has already solved this Math Challenge.\nI removed the reaction...`,
             });
             await reaction.users.remove(user.id);
             return;
@@ -196,7 +196,7 @@ const messageReactionAdd = async function(reaction, user){
 
         await parentMessage.edit({ content: newContent });
 
-        Log.info(`Added solver ${solver.tag} to integral ${parentMessage.id}`);
+        Log.info(`Added solver ${solver.tag} to Math Challenge ${parentMessage.id}`);
     }
     catch (error){
         const err = error instanceof Error ? error : new Error(String(error));

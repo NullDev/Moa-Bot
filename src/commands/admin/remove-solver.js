@@ -31,12 +31,12 @@ const parseMessageLink = function(link){
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("(ADMIN) Remove a solver from an integral challenge.")
+        .setDescription("(ADMIN) Remove a solver from a Math Challenge.")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addStringOption((option) =>
             option.setName("message")
-                .setDescription("Link to the integral message to remove the solver from")
+                .setDescription("Link to the Math Challenge message to remove the solver from")
                 .setRequired(true))
         .addUserOption((option) =>
             option.setName("user")
@@ -90,7 +90,7 @@ export default {
 
             if (!integralData){
                 return await interaction.editReply({
-                    content: "This message is not a registered integral challenge!",
+                    content: "This message is not a registered Math Challenge!",
                 });
             }
 
@@ -98,7 +98,7 @@ export default {
 
             if (!solvers.includes(user.id)){
                 return await interaction.editReply({
-                    content: `${user} is not in the solvers list for this integral!`,
+                    content: `${user} is not in the solvers list for this Math Challenge!`,
                 });
             }
 
@@ -145,10 +145,10 @@ export default {
                 await message.edit({ content: newContent });
             }
 
-            Log.info(`Removed solver ${user.tag} from integral ${messageId} by ${interaction.user.tag}`);
+            Log.info(`Removed solver ${user.tag} from Math Challenge ${messageId} by ${interaction.user.tag}`);
 
             return await interaction.editReply({
-                content: `Successfully removed ${user} from the solvers list for this integral.`,
+                content: `Successfully removed ${user} from the solvers list for this Math Challenge.`,
             });
         }
         catch (error){

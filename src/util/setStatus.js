@@ -10,7 +10,7 @@ import { ActivityType } from "discord.js";
  * @param {import("discord.js").Client} client
  */
 const setStatus = async function(client){
-    client.user?.setActivity({ name: "Solving Integrals... Like a nerd.", type: ActivityType.Playing });
+    client.user?.setActivity({ name: "Solving Math Challenges... Like a nerd.", type: ActivityType.Playing });
     client.user?.setStatus("online");
 };
 
