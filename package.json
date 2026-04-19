@@ -38,7 +38,7 @@
     "canvas": "^3.2.0",
     "check-dependencies": "^2.0.0",
     "discord-hybrid-sharding": "^3.0.1",
-    "discord.js": "^14.25.1",
+    "discord.js": "^14.26.3",
     "mathjs": "^15.2.0",
     "nerdamer": "^1.1.13",
     "node-cron": "^4.2.1",
