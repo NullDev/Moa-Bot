@@ -76,6 +76,7 @@ const messageCreate = async function(message){
         if (!text) return;
 
         const botChannelId = config.ids.bot_channel;
+        // @ts-ignore
         const isOwner = config.discord.bot_owner_ids.includes(message.author.id);
         const isLimited = !isOwner && !!botChannelId && message.channelId !== botChannelId;
 
