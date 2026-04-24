@@ -1,6 +1,7 @@
 import devCmd from "../service/devCmd.js";
 import { MessageLearner } from "../ai/MsgLearn.js";
 import { PythonAIWorker } from "../ai/getAiReply.js";
+import { consumeAiReply } from "../ai/aiRateLimit.js";
 import { config } from "../../config/config.js";
 import Log from "../util/log.js";
 
@@ -70,9 +71,39 @@ const messageCreate = async function(message){
 
     if (message.mentions.has(message.client.user)){
         if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
-        if ("sendTyping" in message.channel) message.channel.sendTyping();
+
         const text = cleanMsg(message);
         if (!text) return;
+
+        const botChannelId = config.ids.bot_channel;
+        const isOwner = config.discord.bot_owner_ids.includes(message.author.id);
+        const isLimited = !isOwner && !!botChannelId && message.channelId !== botChannelId;
+
+        /** @type {"allow" | "redirect"} */
+        let decision = "allow";
+        if (isLimited){
+            const d = consumeAiReply(message.author.id);
+            if (d === "ignore") return;
+            decision = d;
+        }
+
+        /** @type {import("discord.js").TextBasedChannel} */
+        let replyChannel = message.channel;
+        if (decision === "redirect"){
+            await message.reply({
+                content: `Lets continue this here: <#${botChannelId}>`,
+                allowedMentions: { parse: [] },
+            }).catch(() => {});
+
+            const fetched = await message.guild.channels.fetch(botChannelId).catch(() => null);
+            if (!fetched || !fetched.isTextBased()){
+                Log.error(`[AIWorker] bot_channel ${botChannelId} not found or not text-based.`);
+                return;
+            }
+            replyChannel = fetched;
+        }
+
+        if ("sendTyping" in replyChannel) replyChannel.sendTyping();
 
         /** @type {string[]} */
         const context = [];
@@ -102,12 +133,29 @@ const messageCreate = async function(message){
                 context,
             });
 
-            await message.reply(reply);
+            if (decision === "redirect" && "send" in replyChannel){
+                await replyChannel.send({
+                    content: `<@${message.author.id}> ${reply}`,
+                    allowedMentions: { users: [message.author.id] },
+                });
+            }
+            else {
+                await message.reply(reply);
+            }
         }
         catch (error){
             const err = error instanceof Error ? error : new Error(String(error));
             Log.error("[AIWorker] Inference error:", err);
-            await message.reply("It seems like Shadow messed up again. Something broke lmao... :skull:");
+            const errText = "It seems like Shadow messed up again. Something broke lmao... :skull:";
+            if (decision === "redirect" && "send" in replyChannel){
+                await replyChannel.send({
+                    content: `<@${message.author.id}> ${errText}`,
+                    allowedMentions: { users: [message.author.id] },
+                }).catch(() => {});
+            }
+            else {
+                await message.reply(errText);
+            }
         }
 
         return;

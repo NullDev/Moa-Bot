@@ -13,6 +13,7 @@ export default {
         meme_channel: "",
         general_channel: "",
         moabot: "",
+        bot_channel: "",
     },
     emkc: "",
     ai_included_channels: [
