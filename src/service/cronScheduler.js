@@ -2,6 +2,7 @@ import cron from "node-cron";
 import Log from "../util/log.js";
 import LogHandler from "../crons/removeOldLogs.js";
 import getRandomMathFact from "../util/mathFact.js";
+import { cleanupExpired as cleanupAiRateLimit } from "../ai/aiRateLimit.js";
 import { config } from "../../config/config.js";
 
 // ========================= //
@@ -35,6 +36,11 @@ const scheduleCrons = async function(client){
         const finalFact = formattedFact.endsWith(".") ? formattedFact.slice(0, -1) : formattedFact;
 
         await mainChannel.send("Did you know that " + finalFact + "? :point_up::nerd:").catch();
+    });
+
+    // hourly cron: prune expired AI rate-limit entries
+    cron.schedule("0 * * * *", () => {
+        cleanupAiRateLimit();
     });
 
     const cronCount = cron.getTasks().size;
