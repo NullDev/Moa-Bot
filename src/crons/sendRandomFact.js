@@ -26,7 +26,7 @@ const sendRandomFact = async function(client){
     const finalFact = formattedFact.endsWith(".") ? formattedFact.slice(0, -1) : formattedFact;
 
     await mainChannel.send("Did you know that " + finalFact + "? :point_up::nerd:" + (
-        proof ? `\n-# ((proof)[<${proof}>])` : ""
+        proof ? `\n-# ([proof](<${proof}>))` : ""
     )).catch();
 };
 
