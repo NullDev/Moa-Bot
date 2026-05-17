@@ -21,11 +21,13 @@ const sendRandomFact = async function(client){
         return;
     }
 
-    const mathFact = await getRandomMathFact(true);
-    const formattedFact = mathFact.charAt(0).toLowerCase() + mathFact.slice(1);
+    const { fact, proof } = await getRandomMathFact(true);
+    const formattedFact = fact.charAt(0).toLowerCase() + fact.slice(1);
     const finalFact = formattedFact.endsWith(".") ? formattedFact.slice(0, -1) : formattedFact;
 
-    await mainChannel.send("Did you know that " + finalFact + "? :point_up::nerd:").catch();
+    await mainChannel.send("Did you know that " + finalFact + "? :point_up::nerd:" + (
+        proof ? `\n-# ((proof)[<${proof}>])` : ""
+    )).catch();
 };
 
 export default sendRandomFact;
