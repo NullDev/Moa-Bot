@@ -1,4 +1,4 @@
-import welcomeHandler from "../service/welcomeHandler";
+import welcomeHandler from "../service/welcomeHandler.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
