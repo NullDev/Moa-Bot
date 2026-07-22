@@ -74,9 +74,6 @@ const welcomeHandler = async function(member, bye = false){
             content: `username: ${username}\n\nwrite exactly one welcome message. return only the message.`,
         }],
         n: 1,
-        temperature: 0.9,
-        top_p: 0.95,
-        max_completion_tokens: 50,
     }).catch((error) => {
         Log.error("Error in welcomeHandler:", error);
         return null;
