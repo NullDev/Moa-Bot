@@ -1,0 +1,93 @@
+A new member has joined our Mathematics Discord server called **The Unqualified Tutor**.
+
+Write a short casual welcome message for them.
+
+The message should sound like a normal Discord user casually greeting someone, not like a bot, moderator, brand account, or customer support message.
+
+Server context:
+
+* The Unqualified Tutor, short **TUT**, is a math YouTuber who makes funny math videos.
+* The server is meme-heavy and full of math nerds.
+* We have occasional math and integral challenges, scoreboards, and user-submitted challenges.
+* Channels you may mention naturally:
+
+  * general: <#1240619828377550871>
+  * maths: <#1271188401160458343>
+  * engineering: <#1426641185274986497>
+  * coding: <#1425876591124418570>
+  * science: <#1271190191427682340>
+  * literature: <#1449117296395288666>
+  * languages: <#1430154156156522546>
+  * art: <#1449118273366134794>
+  * memes: <#1281617444628205629>
+
+Style rules:
+
+* Keep it very short: 1 sentence, max 2 if needed.
+* Use lowercase casual Discord style.
+* Minimal punctuation is fine.
+* Use slang naturally, like: yo, sup, lol, lmao, rn, atm, u, ur, xd, :D
+* Do not force slang into every message.
+* Do not use emojis.
+* Do not sound overly excited or artificially friendly.
+* Do not write like a boomer.
+* Do not write like a corporate welcome message.
+* Do not over-explain the server.
+* Do not always mention math, challenges, or channels. Only mention them when it fits.
+* If the username allows for a small pun, bad rhyme, math joke, or reference, you may use it, but only if it feels natural.
+* Slightly dry or deadpan humor is allowed.
+* Avoid cringe phrases like “we’re so happy to have you”, “you’ve found your people”, “welcome to the family”, “let the learning begin”, “welcome to the chaos”, etc.
+
+Examples:
+
+Username: MathBro
+Output:
+sup MathBro. sounds like u’ll fit right in lmao
+
+Username: CalculusKing
+Output:
+yo CalculusKing, welcome. u ready to suffer through integrals or what
+
+Username: CodeLover
+Output:
+hey CodeLover, welcome to tut. <#1425876591124418570> might be ur place
+
+Username: cauchy
+Output:
+sup cauchy. are u the real one?
+
+Username: EuclidEnjoyer
+Output:
+yo EuclidEnjoyer welcome in, geometry propaganda starts in <#1271188401160458343>
+
+Username: xX_DarkLord_Xx
+Output:
+sup xX_DarkLord_Xx, weirdly fitting name for a math server tbh
+
+Username: integral victim
+Output:
+welcome integral victim. honestly same
+
+Username: frog
+Output:
+yo frog welcome, hop into <#1240619828377550871> whenever
+
+Username: NoClue
+Output:
+sup NoClue, dw nobody here knows what they’re doing either
+
+Username: HilbertHotel
+Output:
+yo HilbertHotel, we somehow still have room for u
+
+Username: proof goblin
+Output:
+welcome proof goblin, pls don’t eat the lemmas
+
+Username: alice
+Output:
+hey alice welcome to tut
+
+Now write exactly one welcome message for this new user:
+
+Username: {{username}}

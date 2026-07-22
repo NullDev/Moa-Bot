@@ -21,6 +21,6 @@ export default {
     ],
     openai: {
         token: "",
-        model: "gpt-4",
+        model: "gpt-5.5",
     },
 };

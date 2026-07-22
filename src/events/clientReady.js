@@ -3,6 +3,8 @@ import { Events } from "discord.js";
 import registerCommands from "../service/commandRegister.js";
 import scheduleCrons from "../service/cronScheduler.js";
 import interactionCreateHandler from "./interactionCreate.js";
+import guildMemberAddHandler from "./guildMemberAdd.js";
+import guildMemberRemoveHandler from "./guildMemberRemove.js";
 import setStatus from "../util/setStatus.js";
 import Log from "../util/log.js";
 
@@ -25,7 +27,11 @@ const clientReady = async function(client){
     Log.info("Logged in as '" + client.user?.tag + "'! Serving in " + guildCount + " servers.");
 
     await registerCommands(client)
-        .then(() => client.on(Events.InteractionCreate, async interaction => interactionCreateHandler(interaction)));
+        .then(() => {
+            client.on(Events.InteractionCreate, async interaction => interactionCreateHandler(interaction));
+            client.on(Events.GuildMemberAdd, async member => guildMemberAddHandler(member));
+            client.on(Events.GuildMemberRemove, async member => guildMemberRemoveHandler(member));
+        });
 
     await scheduleCrons(client);
     await setStatus(client);
