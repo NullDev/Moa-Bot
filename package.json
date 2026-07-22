@@ -6,7 +6,7 @@
   "description": "Discord bot for TUT Server. Math utils and daily Math Challenge helpers.",
   "main": "src/app.js",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.18.0"
   },
   "scripts": {
     "start:dev": "npm run lint && cross-env NODE_ENV=development node src/app.js",
@@ -42,6 +42,11 @@
     "mathjs": "^15.2.0",
     "nerdamer": "^1.1.13",
     "node-cron": "^4.2.1",
+    "openai": "^6.48.0",
     "quick.db": "^9.1.7"
+  },
+  "allowScripts": {
+    "canvas@3.2.0": true,
+    "better-sqlite3@12.5.0": true
   }
 }

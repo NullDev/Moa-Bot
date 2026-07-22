@@ -19,4 +19,8 @@ export default {
     ai_included_channels: [
         "",
     ],
+    openai: {
+        token: "",
+        model: "gpt-4",
+    },
 };
