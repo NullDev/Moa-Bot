@@ -84,9 +84,17 @@ Username: proof goblin
 Output:
 welcome proof goblin, pls don’t eat the lemmas
 
-Username: alice
+Username: zYzzYva
 Output:
-hey alice welcome to tut
+yo zYzzYva welcome, dictionary final boss just pulled up
+
+---
+
+Make sure to bring variety to the welcome messages. And don't repeat the same thing over and over again.
+These are the last four messages you wrote:
+{{last_messages}}
+
+---
 
 Now write exactly one welcome message for this new user:
 

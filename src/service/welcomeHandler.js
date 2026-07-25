@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import OpenAI from "openai";
 import { config } from "../../config/config.js";
+import challengesDb from "../util/challengesDb.js";
 import Log from "../util/log.js";
 
 // ========================= //
@@ -13,16 +14,62 @@ const openai = new OpenAI({
     apiKey: config.openai.token,
 });
 
+const MAX_LAST_MESSAGES = 4;
+
+/**
+ * Build the DB key holding the last welcome messages of a guild
+ *
+ * @param {String} guildId
+ * @returns {String}
+ */
+const lastMessagesKey = (guildId) => `guild-${guildId}.lastWelcomeMessages`;
+
+/**
+ * Fetch the last welcome messages we wrote in a guild
+ *
+ * @param {String} guildId
+ * @returns {Promise<Array<String>>}
+ */
+const getLastMessages = async function(guildId){
+    const stored = await challengesDb.get(lastMessagesKey(guildId)).catch((error) => {
+        Log.error("Error fetching last welcome messages:", error);
+        return null;
+    });
+
+    return Array.isArray(stored) ? stored : [];
+};
+
+/**
+ * Store a new welcome message, rotating the oldest one out
+ *
+ * @param {String} guildId
+ * @param {String} message
+ * @returns {Promise<void>}
+ */
+const pushLastMessage = async function(guildId, message){
+    const messages = await getLastMessages(guildId);
+    messages.push(message);
+
+    await challengesDb.set(lastMessagesKey(guildId), messages.slice(-MAX_LAST_MESSAGES)).catch((error) => {
+        Log.error("Error storing last welcome message:", error);
+    });
+};
+
 /**
  * Prepare the prompt for usage
  *
  * @param {String} username
+ * @param {Array<String>} lastMessages
  * @returns {Promise<String>}
  */
-const preparePrompt = async function(username){
+const preparePrompt = async function(username, lastMessages){
     const prompt = await fs.readFile("./data/welcome_prompt.txt", "utf-8");
 
     const prepared = prompt
+        .replace("{{last_messages}}", lastMessages.length
+            ? lastMessages.map(msg => `- ${msg}`).join("\n")
+            : "(none yet)",
+        )
         .replace("{{date}}", new Date().toLocaleString("en-US", {
             day: "2-digit",
             month: "2-digit",
@@ -63,7 +110,8 @@ const welcomeHandler = async function(member, bye = false){
         return;
     }
 
-    const prompt = await preparePrompt(username);
+    const lastMessages = await getLastMessages(member.guild.id);
+    const prompt = await preparePrompt(username, lastMessages);
     const res = await openai.chat.completions.create({
         model: config.openai.model,
         messages: [{
@@ -83,6 +131,8 @@ const welcomeHandler = async function(member, bye = false){
 
     const response = res.choices[0].message.content?.trim();
     if (!response) return;
+
+    await pushLastMessage(member.guild.id, response);
 
     const userPing = `<@${member.id}> `;
     await channel.send(userPing + response);
