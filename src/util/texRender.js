@@ -44,6 +44,7 @@ const preamble = `\\nonstopmode
 \\newtheorem{Definition}[Theorem]{Definition}
 \\usepackage[n, advantage, operators, sets, adversary, landau, probability, notions, logic, ff, mm, primitives, events, complexity, oracles, asymptotics, keys]{cryptocode}
 \\usepackage{chemfig}
+\\usepackage{musixtex}
 \\usepackage{mathdots}
 \\definecolor{bg}{HTML}{36393E}
 \\pagecolor{bg}
